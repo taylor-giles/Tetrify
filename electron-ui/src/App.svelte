@@ -1,5 +1,8 @@
 <script lang="ts">
   import ToggleGrid from './components/ToggleGrid.svelte';
+
+  let grid = [];
+  let target = "";
 </script>
 
 <main>
@@ -8,7 +11,8 @@
 
   <ToggleGrid 
     width={20}
-    height={20}>
+    height={20}
+    bind:grid>
   </ToggleGrid>
 </main>
 
