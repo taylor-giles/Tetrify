@@ -1,16 +1,8 @@
 import numpy as np
+import random
+from tetris_env import TetrisAction, EndResult, set_piece, get_shape_grid, is_occupied, has_dropped, rotated, piece_match, count_false_positives, count_false_negatives, count_buried_false_negatives, pieces, apply_shape, print_board, take_action
 
-# Import the gym
-import sys
-sys.path.append('./tetris-gym')
-from tetris_env import TetrisAction, EndResult, get_shape_grid, is_occupied, has_dropped, rotated, piece_match, count_false_positives, count_false_negatives
-import curses
-
-BOARD_WIDTH = 10
-BOARD_HEIGHT = 20
-
-features = [count_false_positives, count_false_negatives]
-feature_names = ["False Positives", "False Negatives"]
+features = [count_false_positives, count_false_negatives, count_buried_false_negatives]
 weights = [-1, -1]
 
 def get_features(_board):
@@ -22,24 +14,23 @@ def get_features(_board):
 
 
 # Returns the optimal (ordered) sequence of actions to achieve the desired placement starting from the current state.
-def generate_action_sequence(placement, current_state):
+def generate_action_sequence(placement, board, shape, anchor):
     sequence = []
-    placement_shape, placement_anchor_col = placement
-    board, shape, anchor = current_state
+    placement_shape, placement_anchor = placement
     placement_shape_grid = get_shape_grid(placement_shape)
     
     # If the orientation of the shape does not match, then rotate
     while not np.array_equal(get_shape_grid(shape), placement_shape_grid):
         # Determine which way to rotate
-        if np.array_equal(get_shape_grid(rotated(shape, True)), placement_shape_grid):
-            sequence.append(TetrisAction.ROTATE_RIGHT)
-            shape = rotated(shape, True)
-        else:
+        if np.array_equal(get_shape_grid(rotated(shape, False)), placement_shape_grid):
             sequence.append(TetrisAction.ROTATE_LEFT)
             shape = rotated(shape, False)
+        else:
+            sequence.append(TetrisAction.ROTATE_RIGHT)
+            shape = rotated(shape, True)
     
     # If the anchor column does not match, then move
-    col_diff = anchor[0] - placement_anchor_col
+    col_diff = anchor[0] - placement_anchor[0]
     while col_diff != 0:
         if col_diff > 0:
             sequence.append(TetrisAction.LEFT)
@@ -48,31 +39,35 @@ def generate_action_sequence(placement, current_state):
             sequence.append(TetrisAction.RIGHT)
             col_diff+=1
     
-    # Do the drop
-    sequence.append(TetrisAction.HARD_DROP)
+    # Do the drop (using soft drops)
+    while not has_dropped(shape, anchor, board):
+        anchor = (placement_anchor[0], anchor[1]+1)
+        sequence.append(TetrisAction.SOFT_DROP)
+
     return sequence
 
 
 class TetrisAgent:
-    def __init__(self, parameters):
-        self.parameters = [-1 for _ in features]
+    def __init__(self, parameters, board_shape, allowable_false_positives: int, allowable_false_negatives: int):
+        self.board_width = board_shape[0]
+        self.board_height = board_shape[1]
+        self.parameters = parameters
         self.current_state = (None, None, None, None)
+        self.allowable_false_positives = allowable_false_positives
+        self.allowable_false_negatives = allowable_false_negatives
 
     def state_value(self, board):
         # Given a board and a list of feature weights (parameters), return the summed "goodness" value of the board
         return sum([feature*weight for feature, weight in zip(get_features(board), self.parameters)])
     
-    # Returns a tuple (shape, anchor_col) where those values are the optimal way to play this piece as decided by this agent
-    def get_goal_placement(self, _board, shape):
-        curr_max_val = None
-        curr_best_placement = (None, None, None)
+    # Returns a list of all possible placements for the given shape on the given board.
+    # Placements are given as a tuple (score, shape, anchor) where those values are the position for the piece and the corresponding score for that position, as decided by this agent
+    def get_scored_placements(self, _board, shape):
+        placements = []
 
         # For each orientation of the piece...
         prev_orientations = [] # Keep track of previous orientations to check for duplicates
         for ori in range(4): # Max 4 orientations per shape
-            # Rotate the shape
-            shape = rotated(shape)
-
             # Check if this orientation has already been seen
             if np.any([np.array_equal(get_shape_grid(shape), prev_shape_grid) for prev_shape_grid in prev_orientations]):
                 # This orientation has been seen before (therefore all unique orientations have been seen), so do not continue checking new orientations.
@@ -80,36 +75,29 @@ class TetrisAgent:
             prev_orientations.append(get_shape_grid(shape))
             
             # For each possible anchor column...
-            for x in range(BOARD_WIDTH):
+            for x in range(self.board_width):
                 board = np.copy(_board)
 
                 # Check if this is a valid placement
                 start_height = abs(min(_y for _, _y in shape))
                 if not is_occupied(shape, (x, start_height), board):
                     # This is valid placement. Simulate dropping the piece
-                    y = start_height-1
-                    while not has_dropped(shape, (x, y), board):
-                        y += 1
+                    shape, (x,y) = take_action(shape, (x, start_height-1), board, TetrisAction.HARD_DROP)
                     
-                    # Draw the shape into the board
-                    for cell in shape:
-                        # print(x, cell[0])
-                        board[x + cell[0], y + cell[1]] = 2
-
                     # Successfully hallucinated the dropping of the piece. Evaluate the value of this new board
                     board_val = self.state_value(board)
-                    
-                    if curr_max_val == None:
-                        curr_max_val = board_val
-                    
-                    if board_val >= curr_max_val:
-                        curr_best_placement = (shape, x)
-        return curr_best_placement
+
+                    # Add this position and its score to output array
+                    placements.append((board_val, shape, (x,y)))
+            
+            # Rotate the shape
+            shape = rotated(shape)
+        return placements
 
 
     # Takes the actions in order as specified by the input queue. 
     # Returns a tuple containing the list of rewards from the actions in this sequence and a boolean indicating whether or not the game ended during this sequence.
-    def take_action_sequence(self, sequence, env, placement):
+    def take_action_sequence(self, sequence, env):
         done = EndResult.NOT_DONE
         for action in sequence:
             if done == EndResult.NOT_DONE:
@@ -122,17 +110,82 @@ class TetrisAgent:
         return done
     
 
-    def play(self, env):
-        while done != EndResult.SUCCESS:
-            done = EndResult.NOT_DONE
-            self.current_state = env.init()
-            self.action_sequence = []
-            while done == EndResult.NOT_DONE:
-                board, shape, anchor = self.current_state
+    def find_placements(self, _board, depth=0):
+        # Randomly order the pieces
+        piece_order = random.sample(list(pieces.values()), len(list(pieces.values())))
 
-                # Determine the best placement and take the action sequence for it
-                placement = self.get_goal_placement(board, shape)
-                sequence = generate_action_sequence(placement, self.current_state)
-                done = self.take_action_sequence(sequence, env, placement)
-        return self.rewards
+        result = EndResult.NOT_DONE
+        sequence = []
+        placements = []
+        board = np.copy(_board)
+        end_board = np.copy(_board)
+
+        # Evaluate end condition
+        result = EndResult.FAILURE if count_false_positives(board) > self.allowable_false_positives else EndResult.NOT_DONE if count_false_negatives(board) > self.allowable_false_negatives else EndResult.SUCCESS
+
+        if result == EndResult.NOT_DONE:
+            # Step 1: Determine the scores for all possible placements for all pieces
+            for piece in piece_order:
+                # Determine all possible placements and their scores
+                placements.extend(self.get_scored_placements(board, piece))
+            
+            # Step 2: Try placements in order of best -> least score
+            for score, shape, anchor in reversed(sorted(placements, key=lambda x: x[0])):
+                # Reset the board and sequence (undo anything done in past iterations of this loop)
+                board = np.copy(_board)
+                sequence = []
+
+                # Build placement object
+                placement = (shape, anchor)
+                sequence.append(placement)
+                # print("placement", score, shape, anchor)
+
+                # Put the shape onto the board (make the placement)
+                apply_shape(*placement, board)
+                end_board = np.copy(board)
+
+                # print(print_board(board))
+
+                # Re-evaluate end condition
+                result = EndResult.FAILURE if count_false_positives(board) > self.allowable_false_positives else EndResult.NOT_DONE if count_false_negatives(board) > self.allowable_false_negatives else EndResult.SUCCESS
+
+                if result == EndResult.NOT_DONE:
+                    # Step 2a: Recursive call to find the rest of the sequence
+                    result, rest_of_sequence, end_board = self.find_placements(np.copy(board), depth+1)
+                    sequence.extend(rest_of_sequence)
+
+                # On success, stop looking (on failure, try next placement)
+                if result == EndResult.SUCCESS:
+                    break
+        print(result, depth, flush=True)
+        return result, sequence, end_board
+
+
+    def build_animation_from_placements(self, _board, placements):
+        frames = []
+        board = np.copy(_board)
+        for placement in placements:
+            # Set the piece
+            shape, anchor = set_piece(board, placement[0])   
+            curr_cell_val = board[anchor[0], anchor[1], :]
+            board[placement[1][0], placement[1][1]] = (curr_cell_val[0], curr_cell_val[1], "P")
+            frames.append(board[:, :, 2].T.tolist())
+
+            # Find the action sequence
+            sequence = generate_action_sequence(placement, board, shape, anchor)
+
+            print(sequence, flush=True)
+
+            # Take the actions in the sequence
+            for action in sequence:
+                shape, anchor = take_action(shape, anchor, board, action)
+                frames.append(board[:, :, 2].T.tolist())
+        return frames
+    
+    def run_simulation(self, board):
+        result, placements, end_board = self.find_placements(board)
+        if result == EndResult.SUCCESS:
+            return EndResult.SUCCESS, self.build_animation_from_placements(board, placements)
+        else:
+            return EndResult.FAILURE, []
 
