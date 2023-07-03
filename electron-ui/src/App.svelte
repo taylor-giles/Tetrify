@@ -5,21 +5,23 @@
 
   let grid = [];
   let colorIndexGrid = [];
-  const DEFAULT_COLOR = "#000000";
+  const DEFAULT_COLOR = "#FFFFFF";
   let colors = {
-    "T": "#FF0000",
-    "J": "#FFFF00",
+    "T": "#FF00FF",
+    "J": "#FFAA00",
     "L": "#00FF00",
     "Z": "#00FFFF",
-    "S": "#0000FF",
-    "I": "#FF00FF",
+    "S": "#FF0000",
+    "I": "#0000FF",
     "O": "#905010",
+    
     "A": "#FFFFFF",
     "P": "#999999"
   };
-  let width = 11,
-    height = 11;
-  let frameDelay = 250;
+  let width = 8,
+    height = 8;
+  let frameDelay = 100;
+  let currAnimationNumber = 0;
 
   let colorGrid = [];
 
@@ -29,31 +31,37 @@
    */
   function onSuccess(animationFrames) {
     // Start the animation
-    playAnimation(animationFrames) 
+    startAnimation(animationFrames) 
   }
 
   function runSimulation() {
     runEngine(grid, onSuccess);
   }
 
-  function playAnimation(frames, frameIndex = 0, frameDelay = getFrameDelay()) {  
-    // Build the frame
-    let newColorGrid = [];
-    colorIndexGrid = frames[frameIndex];
-    for (let i = 0; i < colorIndexGrid.length; i++) {
-      let colorRow = [];
-      for (let j = 0; j < colorIndexGrid[i].length; j++) {
-        colorRow.push(getColor(colorIndexGrid[i][j]));
+  function startAnimation(frames) {
+    playAnimation(frames, currAnimationNumber++)
+  }
+
+  function playAnimation(frames, animationNumber = 0, frameIndex = 0, frameDelay = getFrameDelay()) {  
+    if(animationNumber >= currAnimationNumber-1){
+      // Build the frame
+      let newColorGrid = [];
+      colorIndexGrid = frames[frameIndex];
+      for (let i = 0; i < colorIndexGrid.length; i++) {
+        let colorRow = [];
+        for (let j = 0; j < colorIndexGrid[i].length; j++) {
+          colorRow.push(getColor(colorIndexGrid[i][j]));
+        }
+        newColorGrid.push(colorRow);
       }
-      newColorGrid.push(colorRow);
+
+      //Set the colorGrid var to trigger Svelte autoupdate
+      colorGrid = newColorGrid;
+
+      //Set the timeout to display the next frame
+      let nextFrameDelay = getFrameDelay() //This function call is necessary so that the frame delay will change if updated by user during animation
+      setTimeout(() => {playAnimation(frames, animationNumber, (frameIndex+1) % frames.length, nextFrameDelay)}, frameDelay);
     }
-
-    //Set the colorGrid var to trigger Svelte autoupdate
-    colorGrid = newColorGrid;
-
-    //Set the timeout to display the next frame
-    let nextFrameDelay = getFrameDelay() //This function call is necessary so that the frame delay will change if updated by user during animation
-    setTimeout(() => {playAnimation(frames, (frameIndex+1) % frames.length, nextFrameDelay)}, frameDelay);
   }
 
   function getColor(pieceName) {
@@ -74,7 +82,7 @@
   <div id="preview-label-spacer">
     Preview:
   </div>
-  <ColorGrid bind:width bind:height bind:grid={colorGrid} />
+  <ColorGrid bind:width height={height+6} bind:grid={colorGrid} />
 
   <button on:click={runSimulation}> Animate! </button>
 </main>

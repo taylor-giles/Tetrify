@@ -1,7 +1,8 @@
 import numpy as np
 import random
 from enum import Enum
-0
+from utils import log
+
 # This enum is designed so that, when a block is placed, each of its cell values can be updated by incrementing by 1.
 # (similarly, if a cell is cleared, its value can be decremented by 1)
 # Value 2 is skipped intentionally, to act as an error indicator (it is not possible to fill a false positive or clear a false negative)
@@ -53,9 +54,6 @@ def rotated(shape, cclk=False):
 
 # Returns False iff it is possible for the shape to occupy that anchor location
 def is_occupied(shape, anchor, board):
-    # if anchor[0] > 0 and anchor[1] > 0 and anchor[0] < board.shape[0] and anchor[1] < board.shape[1]:
-    #     curr_cell_val = board[anchor[0], anchor[1], :]
-    #     board[anchor[0], anchor[1]] = (curr_cell_val[0], curr_cell_val[1], "A")
     for i, j in shape:
         x, y = anchor[0] + i, anchor[1] + j
         if x < 0 or y < 0 or x >= board.shape[0] or y >= board.shape[1] or (is_filled(board[x, y][0]) and not board[x,y][1]):
@@ -167,7 +165,7 @@ def apply_shape(shape, anchor, board: np.ndarray):
             new_piece_name = get_piece_name(shape)
 
             # Set cell
-            board[x,y] = (new_val, new_is_ghost, "A" if x == anchor[0] and y== anchor[1] else new_piece_name)
+            board[x,y] = (new_val, new_is_ghost, new_piece_name)
 
 
 def count_false_negatives(board: np.ndarray):
@@ -181,7 +179,7 @@ def count_buried_false_negatives(board: np.ndarray):
     output = 0
     for x in range(board.shape[0]):
         count = 0
-        for y in reversed(range(board.shape[0])):
+        for y in reversed(range(board.shape[1])):
             if board[x,y][0] == CellValue.FALSE_NEGATIVE.value:
                 count+=1
             if is_filled(board[x,y][0]):
@@ -192,9 +190,45 @@ def count_buried_false_negatives(board: np.ndarray):
 def count_ghosts(board: np.ndarray):
     return np.count_nonzero(board[:, :, 1])
 
+# A "straggler" is a false negative that cannot be filled without creating at least one false positive.
+# This function uses DFS to determine the mod4 size of each island of false negatives, 
+#   then returns a tuple containing the number of stragglers and the total number of islands.
+# The number of islands can be used as the lower bound for the number of false positives required to fill all stragglers (one per island).
+# Note that it is not sufficient to say that the stragglers of an island can be filled by a minimum of 4-(island size % 4) false positives, 
+#   because it is possible that placing a single block could fill the stragglers of multiple islands (max 3).
+def count_stragglers(board: np.ndarray):
+    num_stragglers = 0
+    num_islands = 0
+    visited = np.full((board.shape[0], board.shape[1]), False)
+
+    def dfs(x, y):
+        currentSize = 0
+
+        # Bounds check
+        if (0 <= x and x < board.shape[0]) and (0 <= y and y < board.shape[1]) and not visited[x][y]:
+            visited[x][y] = True
+
+            # Value check
+            if board[x][y][0] == CellValue.FALSE_NEGATIVE.value:
+                currentSize += 1
+
+                # Recursive calls (one for each neighbor)
+                for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                    currentSize += dfs(x + dx, y + dy)
+        return currentSize
+
+    for x in range(board.shape[0]):
+        for y in range(board.shape[1]):
+            if not visited[x][y] and board[x][y][0] == CellValue.FALSE_NEGATIVE.value:
+                num_stragglers += dfs(x, y) % 4
+                num_islands += 1
+
+    return (num_stragglers, num_islands)
+
+
 def board_from_grid(grid: np.ndarray):
     # Populate board with tuples of (CellValue, is_ghost, piece_name)
-    board = np.empty((*grid.shape, 3), dtype='object')
+    board = np.empty((*grid.T.shape, 3), dtype='object')
     for index, value in np.ndenumerate(grid.T):
         board[index] = (CellValue.FALSE_NEGATIVE.value if value else CellValue.EMPTY.value, False, None)  
     return board

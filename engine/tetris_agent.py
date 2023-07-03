@@ -1,6 +1,7 @@
 import numpy as np
 import random
-from tetris_env import TetrisAction, EndResult, set_piece, get_shape_grid, is_occupied, has_dropped, rotated, piece_match, count_false_positives, count_false_negatives, count_buried_false_negatives, pieces, apply_shape, print_board, take_action
+from tetris_env import TetrisAction, EndResult, set_piece, get_shape_grid, is_occupied, has_dropped, rotated, piece_match, count_stragglers, count_false_positives, count_false_negatives, count_buried_false_negatives, pieces, apply_shape, print_board, take_action
+from utils import log
 
 features = [count_false_positives, count_false_negatives, count_buried_false_negatives]
 weights = [-1, -1]
@@ -109,6 +110,10 @@ class TetrisAgent:
                     break
         return done
     
+    def did_fail(self, board):
+        num_stragglers, num_needed_false_positives = count_stragglers(board)
+        num_false_positives = count_false_positives(board)
+        return num_false_positives > self.allowable_false_positives or (num_false_positives + num_needed_false_positives > self.allowable_false_positives and num_stragglers > self.allowable_false_negatives)
 
     def find_placements(self, _board, depth=0):
         # Randomly order the pieces
@@ -121,16 +126,33 @@ class TetrisAgent:
         end_board = np.copy(_board)
 
         # Evaluate end condition
-        result = EndResult.FAILURE if count_false_positives(board) > self.allowable_false_positives else EndResult.NOT_DONE if count_false_negatives(board) > self.allowable_false_negatives else EndResult.SUCCESS
+        result = EndResult.FAILURE if self.did_fail(board) else EndResult.NOT_DONE if count_false_negatives(board) > self.allowable_false_negatives else EndResult.SUCCESS
 
         if result == EndResult.NOT_DONE:
             # Step 1: Determine the scores for all possible placements for all pieces
             for piece in piece_order:
                 # Determine all possible placements and their scores
                 placements.extend(self.get_scored_placements(board, piece))
-            
-            # Step 2: Try placements in order of best -> least score
-            for score, shape, anchor in reversed(sorted(placements, key=lambda x: x[0])):
+
+            # Step 2: Order the placements by score, but randomize the order of placements with the same score
+            placements = sorted(placements, key=lambda x: x[0], reverse=True)
+            sorted_placements = []
+            current_score = placements[0][0]
+            current_group = []
+            for placement in placements:
+                if placement[0] == current_score:
+                    current_group.append(placement)
+                else:
+                    sorted_placements.extend(random.sample(current_group, len(current_group)))
+                    current_group = [placement]
+                    current_score = placement[0]
+            sorted_placements.extend(current_group)
+
+            # Print the maximum score
+            max_score = max(placements, key=lambda x: x[0])[0]
+
+            # Step 3: Try placements in order of best -> least score
+            for score, shape, anchor in sorted_placements:
                 # Reset the board and sequence (undo anything done in past iterations of this loop)
                 board = np.copy(_board)
                 sequence = []
@@ -150,14 +172,13 @@ class TetrisAgent:
                 result = EndResult.FAILURE if count_false_positives(board) > self.allowable_false_positives else EndResult.NOT_DONE if count_false_negatives(board) > self.allowable_false_negatives else EndResult.SUCCESS
 
                 if result == EndResult.NOT_DONE:
-                    # Step 2a: Recursive call to find the rest of the sequence
+                    # Step 3a: Recursive call to find the rest of the sequence
                     result, rest_of_sequence, end_board = self.find_placements(np.copy(board), depth+1)
                     sequence.extend(rest_of_sequence)
 
                 # On success, stop looking (on failure, try next placement)
                 if result == EndResult.SUCCESS:
                     break
-        print(result, depth, flush=True)
         return result, sequence, end_board
 
 
@@ -167,14 +188,12 @@ class TetrisAgent:
         for placement in placements:
             # Set the piece
             shape, anchor = set_piece(board, placement[0])   
-            curr_cell_val = board[anchor[0], anchor[1], :]
-            board[placement[1][0], placement[1][1]] = (curr_cell_val[0], curr_cell_val[1], "P")
+            # curr_cell_val = board[anchor[0], anchor[1], :]
+            # board[placement[1][0], placement[1][1]] = (curr_cell_val[0], curr_cell_val[1], "P")
             frames.append(board[:, :, 2].T.tolist())
 
             # Find the action sequence
             sequence = generate_action_sequence(placement, board, shape, anchor)
-
-            print(sequence, flush=True)
 
             # Take the actions in the sequence
             for action in sequence:
