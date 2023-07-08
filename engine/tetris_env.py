@@ -152,7 +152,7 @@ def clear_ghosts(board: np.ndarray):
             board[index] = (board[index][0]-1, False, None)
 
 
-def apply_shape(shape, anchor, board: np.ndarray):
+def apply_shape(shape, anchor, board: np.ndarray, force_not_ghost=False):
     for i, j in shape:
         x, y = i + anchor[0], j + anchor[1]
         if x < board.shape[0] and x >= 0 and y < board.shape[1] and y >= 0:
@@ -161,7 +161,7 @@ def apply_shape(shape, anchor, board: np.ndarray):
 
             # If this cell is already filled, then there is no need to update its value
             new_val = curr_value + 1
-            new_is_ghost = not has_dropped(shape, anchor, board)
+            new_is_ghost = not has_dropped(shape, anchor, board) and not force_not_ghost
             new_piece_name = get_piece_name(shape)
 
             # Set cell
@@ -256,7 +256,7 @@ def set_piece(board: np.ndarray, shape):
 
 
 def print_board(board: np.ndarray):
-    s = '+' + '-' * board.shape[0] + '+\n'
+    s = '\n+' + '-' * board.shape[0] + '+\n'
     s += '\n'.join(['|' + ''.join([str(j[0]) if not j[1] else 'G' for j in i]) + '|' for i in np.transpose(board, axes=(1, 0, 2))])
     s += '\n+' + '-' * board.shape[0] + '+'
     return s    

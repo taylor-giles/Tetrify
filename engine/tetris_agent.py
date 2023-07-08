@@ -41,7 +41,7 @@ def generate_action_sequence(placement, board, shape, anchor):
             col_diff+=1
     
     # Do the drop (using soft drops)
-    while not has_dropped(shape, anchor, board):
+    while anchor[1] < placement_anchor[1] and not has_dropped(shape, anchor, board):
         anchor = (placement_anchor[0], anchor[1]+1)
         sequence.append(TetrisAction.SOFT_DROP)
 
@@ -49,13 +49,14 @@ def generate_action_sequence(placement, board, shape, anchor):
 
 
 class TetrisAgent:
-    def __init__(self, parameters, board_shape, allowable_false_positives: int, allowable_false_negatives: int):
+    def __init__(self, parameters, board_shape, allowable_false_positives: int, allowable_false_negatives: int, enforce_gravity=False):
         self.board_width = board_shape[0]
         self.board_height = board_shape[1]
         self.parameters = parameters
         self.current_state = (None, None, None, None)
         self.allowable_false_positives = allowable_false_positives
         self.allowable_false_negatives = allowable_false_negatives
+        self.enforce_gravity = enforce_gravity
 
     def state_value(self, board):
         # Given a board and a list of feature weights (parameters), return the summed "goodness" value of the board
@@ -83,32 +84,33 @@ class TetrisAgent:
                 start_height = abs(min(_y for _, _y in shape))
                 if not is_occupied(shape, (x, start_height), board):
                     # This is valid placement. Simulate dropping the piece
-                    shape, (x,y) = take_action(shape, (x, start_height-1), board, TetrisAction.HARD_DROP)
+                    if self.enforce_gravity:
+                        # Gravity is enforced, so hard dropping is acceptable
+                        shape, (x,y) = take_action(shape, (x, start_height-1), board, TetrisAction.HARD_DROP)
                     
-                    # Successfully hallucinated the dropping of the piece. Evaluate the value of this new board
-                    board_val = self.state_value(board)
+                        # Successfully hallucinated the dropping of the piece. Evaluate the value of this new board
+                        board_val = self.state_value(board)
 
-                    # Add this position and its score to output array
-                    placements.append((board_val, shape, (x,y)))
-            
+                        # Add this position and its score to output array
+                        placements.append((board_val, shape, (x,y)))
+                    else:
+                        # Add a placement for every possible height of this piece (gravity not enforced)
+                        y = start_height-1
+                        while not has_dropped(shape, (x,y), board):
+                            y += 1
+                            apply_shape(shape, (x,y), board, True)
+
+                            # Successfully hallucinated the dropping of the piece. Evaluate the value of this new board
+                            board_val = self.state_value(board)
+
+                            # Add this position and its score to output array
+                            placements.append((board_val, shape, (x,y)))
+
+                            # Reset board (must be done here, BEFORE while condition is checked)
+                            board = np.copy(_board)
             # Rotate the shape
             shape = rotated(shape)
         return placements
-
-
-    # Takes the actions in order as specified by the input queue. 
-    # Returns a tuple containing the list of rewards from the actions in this sequence and a boolean indicating whether or not the game ended during this sequence.
-    def take_action_sequence(self, sequence, env):
-        done = EndResult.NOT_DONE
-        for action in sequence:
-            if done == EndResult.NOT_DONE:
-                self.current_state, done = env.step(action)
-                board, shape, anchor = self.current_state
-
-                # End this sequence early if the piece dropped earlier than expected
-                if has_dropped(shape, (int(anchor[0]), int(anchor[1])), board):
-                    break
-        return done
     
     def did_fail(self, board):
         num_stragglers, num_needed_false_positives = count_stragglers(board)
@@ -123,7 +125,6 @@ class TetrisAgent:
         sequence = []
         placements = []
         board = np.copy(_board)
-        end_board = np.copy(_board)
 
         # Evaluate end condition
         result = EndResult.FAILURE if self.did_fail(board) else EndResult.NOT_DONE if count_false_negatives(board) > self.allowable_false_negatives else EndResult.SUCCESS
@@ -149,7 +150,7 @@ class TetrisAgent:
             sorted_placements.extend(current_group)
 
             # Print the maximum score
-            max_score = max(placements, key=lambda x: x[0])[0]
+            #max_score = max(placements, key=lambda x: x[0])[0]
 
             # Step 3: Try placements in order of best -> least score
             for score, shape, anchor in sorted_placements:
@@ -163,8 +164,7 @@ class TetrisAgent:
                 # print("placement", score, shape, anchor)
 
                 # Put the shape onto the board (make the placement)
-                apply_shape(*placement, board)
-                end_board = np.copy(board)
+                apply_shape(*placement, board, not self.enforce_gravity)
 
                 # print(print_board(board))
 
@@ -173,13 +173,13 @@ class TetrisAgent:
 
                 if result == EndResult.NOT_DONE:
                     # Step 3a: Recursive call to find the rest of the sequence
-                    result, rest_of_sequence, end_board = self.find_placements(np.copy(board), depth+1)
+                    result, rest_of_sequence= self.find_placements(np.copy(board), depth+1)
                     sequence.extend(rest_of_sequence)
 
                 # On success, stop looking (on failure, try next placement)
                 if result == EndResult.SUCCESS:
                     break
-        return result, sequence, end_board
+        return result, sequence
 
 
     def build_animation_from_placements(self, _board, placements):
@@ -199,6 +199,7 @@ class TetrisAgent:
             for action in sequence:
                 shape, anchor = take_action(shape, anchor, board, action)
                 frames.append(board[:, :, 2].T.tolist())
+            apply_shape(shape, anchor, board, not self.enforce_gravity)
         return frames
     
     def run_simulation(self, board):

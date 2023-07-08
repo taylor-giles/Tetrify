@@ -5,7 +5,7 @@
 
   let grid = [];
   let colorIndexGrid = [];
-  const DEFAULT_COLOR = "#FFFFFF";
+  const DEFAULT_COLOR = "#000000";
   let colors = {
     "T": "#FF00FF",
     "J": "#FFAA00",
@@ -18,11 +18,10 @@
     "A": "#FFFFFF",
     "P": "#999999"
   };
-  let width = 8,
-    height = 8;
-  let frameDelay = 100;
+  let width = 16,
+    height = 16;
+  let frameDelay = 35;
   let currAnimationNumber = 0;
-
   let colorGrid = [];
 
   /**
@@ -90,6 +89,5 @@
 <style>
   #preview-label-spacer{
     margin-top: 50px;
-    background-color: "red"
   }
 </style>
