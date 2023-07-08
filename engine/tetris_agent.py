@@ -203,7 +203,7 @@ class TetrisAgent:
         return frames
     
     def run_simulation(self, board):
-        result, placements, end_board = self.find_placements(board)
+        result, placements = self.find_placements(board)
         if result == EndResult.SUCCESS:
             return EndResult.SUCCESS, self.build_animation_from_placements(board, placements)
         else:
