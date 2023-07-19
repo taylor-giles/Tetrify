@@ -49,7 +49,7 @@ def generate_action_sequence(placement, board, shape, anchor):
 
 
 class TetrisAgent:
-    def __init__(self, parameters, board_shape, allowable_false_positives: int, allowable_false_negatives: int, enforce_gravity=False):
+    def __init__(self, parameters, board_shape, allowable_false_positives: int, allowable_false_negatives: int, enforce_gravity=True):
         self.board_width = board_shape[0]
         self.board_height = board_shape[1]
         self.parameters = parameters
@@ -91,8 +91,9 @@ class TetrisAgent:
                         # Successfully hallucinated the dropping of the piece. Evaluate the value of this new board
                         board_val = self.state_value(board)
 
-                        # Add this position and its score to output array
-                        placements.append((board_val, shape, (x,y)))
+                        # Add this position and its score to output array iff its placement would not cause failure
+                        if not self.did_fail(board):
+                            placements.append((board_val, shape, (x,y)))
                     else:
                         # Add a placement for every possible height of this piece (gravity not enforced)
                         y = start_height-1
@@ -103,13 +104,15 @@ class TetrisAgent:
                             # Successfully hallucinated the dropping of the piece. Evaluate the value of this new board
                             board_val = self.state_value(board)
 
-                            # Add this position and its score to output array
-                            placements.append((board_val, shape, (x,y)))
+                            # Add this position and its score to output array iff its placement would not cause failure
+                            if not self.did_fail(board):
+                                placements.append((board_val, shape, (x,y)))
 
                             # Reset board (must be done here, BEFORE while condition is checked)
                             board = np.copy(_board)
             # Rotate the shape
             shape = rotated(shape)
+        # log(len(placements))
         return placements
     
     def did_fail(self, board):
@@ -135,6 +138,10 @@ class TetrisAgent:
                 # Determine all possible placements and their scores
                 placements.extend(self.get_scored_placements(board, piece))
 
+            # If there are no placements, return failure
+            if len(placements) == 0:
+                return EndResult.FAILURE, []
+            
             # Step 2: Order the placements by score, but randomize the order of placements with the same score
             placements = sorted(placements, key=lambda x: x[0], reverse=True)
             sorted_placements = []
@@ -173,7 +180,7 @@ class TetrisAgent:
 
                 if result == EndResult.NOT_DONE:
                     # Step 3a: Recursive call to find the rest of the sequence
-                    result, rest_of_sequence= self.find_placements(np.copy(board), depth+1)
+                    result, rest_of_sequence = self.find_placements(np.copy(board), depth+1)
                     sequence.extend(rest_of_sequence)
 
                 # On success, stop looking (on failure, try next placement)
@@ -199,7 +206,7 @@ class TetrisAgent:
             for action in sequence:
                 shape, anchor = take_action(shape, anchor, board, action)
                 frames.append(board[:, :, 2].T.tolist())
-            apply_shape(shape, anchor, board, not self.enforce_gravity)
+            apply_shape(shape, anchor, board, True)
         return frames
     
     def run_simulation(self, board):

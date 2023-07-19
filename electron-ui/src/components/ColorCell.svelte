@@ -20,5 +20,6 @@
         margin: var(--margin);
         border-radius: 0;
         padding: 0;
+        cursor: auto;
     }
 </style>

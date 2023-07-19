@@ -9,16 +9,28 @@
   export let onColor = "#ffffff",
     offColor = "#000000";
   export let allowDrag = true;
+  export let disabled = false;
 
   // Make the grid of booleans to represent the cells
   export let grid = [];
-  for (let i = 0; i < height; i++) {
-    let row = [];
-    for (let j = 0; j < width; j++) {
-      row.push(false);
-    }
-    grid.push(row);
+
+  $: {
+    width; height;
+    defineGrid();
   }
+
+  function defineGrid(){
+    grid = []
+    for (let i = 0; i < height; i++) {
+      let row = [];
+      for (let j = 0; j < width; j++) {
+        row.push(false);
+      }
+      grid.push(row);
+    }
+    grid = grid;
+  }
+
 </script>
 
 <div>
@@ -33,6 +45,7 @@
           bind:onColor
           bind:offColor
           bind:allowDrag
+          bind:disabled
           bind:isToggled={cell}
         />
       {/each}

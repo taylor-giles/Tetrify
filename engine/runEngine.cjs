@@ -1,6 +1,12 @@
 const { spawn } = window.require('node:child_process');
+const os = require('node:os');
 
 const EOF = "<EOF>"
+const NUM_ADDED_ROWS = 6;
+
+export function getNumCores(){
+  return os.cpus().length;
+}
 
 //An array containing child process objects
 let children = []
@@ -12,17 +18,17 @@ export function stopAllChildren(){
   children.forEach((child) => child.kill())
 }
 
-export function runEngine(grid, onSuccess){
+export function runEngine(grid, falsePositives, falseNegatives, enforceGravity, onSuccess, onFailure, onEnd, numThreads=getNumCores()){
   //Add six rows to the top of the grid to allow for block spawning
   let new_grid = []
-  for(let i = 0; i < 6; i++){
+  for(let i = 0; i < NUM_ADDED_ROWS; i++){
     new_grid.push(new Array(grid[0].length).fill(false))
   }
   new_grid.push(...grid)
   grid = new_grid
 
   let newChildren = []
-  for(let childNum = 0; childNum < 12; childNum++){
+  for(let childNum = 0; childNum < numThreads; childNum++){
     const childProcess = spawn("python", ["../engine/test.py"]);
     newChildren.push(childProcess)
     children.push(childProcess)
@@ -70,12 +76,17 @@ export function runEngine(grid, onSuccess){
       children.splice(children.indexOf(childProcess), 1)
       delete buffers[childProcess.pid]
 
+      //Trigger end event if no more children are running
+      if(children.length <= 0){
+        onEnd();
+      }
+
       //Kill all the other children (if one process ended, either the animation was successfully found, or it is not possible.)
       stopAllChildren();
     });
 
     //Send the data over stdin
-    childProcess.stdin.write(JSON.stringify({grid: grid, false_positives: 0, false_negatives: 0}));
+    childProcess.stdin.write(JSON.stringify({grid: grid, false_positives: falsePositives, false_negatives: falseNegatives, enforce_gravity: enforceGravity}));
     childProcess.stdin.end();
   }
 }

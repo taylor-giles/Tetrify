@@ -7,12 +7,15 @@
         offColor = "#000000";
     export let allowDrag = true;
     export let isToggled = false;
+    export let disabled = false;
     let currentColor = offColor;
 
     $: currentColor = isToggled ? onColor : offColor;
 
     function toggle() {
-        isToggled = !isToggled;
+        if(!disabled){
+            isToggled = !isToggled;
+        }
     }
 
     function onMouseOver(e) {

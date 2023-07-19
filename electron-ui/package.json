@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "@types/watch": "^1.0.3",
+    "os": "^0.1.2",
     "sirv-cli": "^2.0.0"
   }
 }

@@ -1,20 +1,33 @@
 <script lang="ts">
   import ColorCell from "./ColorCell.svelte";
-  
+
   export let width: number, height: number;
   export let cellWidth = "20px",
     cellHeight = "20px",
     cellBorder = "1px solid black",
     cellMargin = "0px";
+  export let defaultColor = "#000000";
 
   // Make the grid of booleans to represent the cells
   export let grid = [];
-  for (let i = 0; i < height; i++) {
-    let row = [];
-    for (let j = 0; j < width; j++) {
-      row.push(false);
+
+  $: {
+    width;
+    height;
+    defaultColor;
+    defineGrid();
+  }
+
+  function defineGrid() {
+    grid = []
+    for (let i = 0; i < height; i++) {
+      let row = [];
+      for (let j = 0; j < width; j++) {
+        row.push(defaultColor);
+      }
+      grid.push(row);
     }
-    grid.push(row);
+    grid = grid;
   }
 </script>
 
