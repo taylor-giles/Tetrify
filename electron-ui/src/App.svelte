@@ -251,7 +251,6 @@
     bind:borderColor
     bind:borderThickness
     bind:cellSize
-    bind:cellSpacing
     bind:animationSpeed
   />
 </main>

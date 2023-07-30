@@ -14,7 +14,6 @@
     export let borderColor: string;
     export let borderThickness: number;
     export let cellSize: number;
-    export let cellSpacing: number;
     export let animationSpeed: number;
 
     // Make sure option values stay defined & positive
@@ -203,19 +202,6 @@
                     type="number"
                     min="0"
                     bind:value={cellSize}
-                    class="number-input"
-                />
-            </td>
-        </tr>
-        <tr>
-            <td>
-                <div class="option-label">Cell Spacing:</div>
-            </td>
-            <td>
-                <input
-                    type="number"
-                    min="0"
-                    bind:value={cellSpacing}
                     class="number-input"
                 />
             </td>
