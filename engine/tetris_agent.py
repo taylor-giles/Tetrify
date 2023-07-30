@@ -1,7 +1,8 @@
 import numpy as np
 import random
-from tetris_env import TetrisAction, EndResult, set_piece, get_shape_grid, is_occupied, has_dropped, rotated, piece_match, count_stragglers, count_false_positives, count_false_negatives, count_buried_false_negatives, pieces, apply_shape, print_board, take_action
+from tetris_env import TetrisAction, SimulationResult, set_piece, get_shape_grid, is_occupied, has_dropped, rotated, piece_match, count_stragglers, count_false_positives, count_false_negatives, count_buried_false_negatives, pieces, apply_shape, print_board, take_action
 from utils import log
+from collections.abc import Callable
 
 features = [count_false_positives, count_false_negatives, count_buried_false_negatives]
 weights = [-1, -1]
@@ -120,19 +121,19 @@ class TetrisAgent:
         num_false_positives = count_false_positives(board)
         return num_false_positives > self.allowable_false_positives or (num_false_positives + num_needed_false_positives > self.allowable_false_positives and num_stragglers > self.allowable_false_negatives)
 
-    def find_placements(self, _board, depth=0):
+    def run_simulation(self, orig_board: np.ndarray, _board: np.ndarray, on_success: Callable[[tuple], None], prev_sequence=[], depth=0):
         # Randomly order the pieces
         piece_order = random.sample(list(pieces.values()), len(list(pieces.values())))
 
-        result = EndResult.NOT_DONE
+        result = SimulationResult.NOT_DONE
         sequence = []
         placements = []
         board = np.copy(_board)
 
         # Evaluate end condition
-        result = EndResult.FAILURE if self.did_fail(board) else EndResult.NOT_DONE if count_false_negatives(board) > self.allowable_false_negatives else EndResult.SUCCESS
+        result = SimulationResult.FAILURE if self.did_fail(board) else SimulationResult.NOT_DONE if count_false_negatives(board) > self.allowable_false_negatives else SimulationResult.SUCCESS
 
-        if result == EndResult.NOT_DONE:
+        if result == SimulationResult.NOT_DONE:
             # Step 1: Determine the scores for all possible placements for all pieces
             for piece in piece_order:
                 # Determine all possible placements and their scores
@@ -140,7 +141,7 @@ class TetrisAgent:
 
             # If there are no placements, return failure
             if len(placements) == 0:
-                return EndResult.FAILURE, []
+                return SimulationResult.FAILURE, []
             
             # Step 2: Order the placements by score, but randomize the order of placements with the same score
             placements = sorted(placements, key=lambda x: x[0], reverse=True)
@@ -168,24 +169,22 @@ class TetrisAgent:
                 # Build placement object
                 placement = (shape, anchor)
                 sequence.append(placement)
-                # print("placement", score, shape, anchor)
 
                 # Put the shape onto the board (make the placement)
                 apply_shape(*placement, board, not self.enforce_gravity)
 
-                # print(print_board(board))
-
                 # Re-evaluate end condition
-                result = EndResult.FAILURE if count_false_positives(board) > self.allowable_false_positives else EndResult.NOT_DONE if count_false_negatives(board) > self.allowable_false_negatives else EndResult.SUCCESS
+                result = SimulationResult.FAILURE if count_false_positives(board) > self.allowable_false_positives else SimulationResult.NOT_DONE if count_false_negatives(board) > self.allowable_false_negatives else SimulationResult.SUCCESS
 
-                if result == EndResult.NOT_DONE:
+                if result == SimulationResult.NOT_DONE:
                     # Step 3a: Recursive call to find the rest of the sequence
-                    result, rest_of_sequence = self.find_placements(np.copy(board), depth+1)
+                    result, rest_of_sequence = self.run_simulation(orig_board, board, on_success, [*prev_sequence, *sequence], depth+1)
                     sequence.extend(rest_of_sequence)
 
-                # On success, stop looking (on failure, try next placement)
-                if result == EndResult.SUCCESS:
-                    break
+                # On success, trigger on_success function
+                if result == SimulationResult.SUCCESS:
+                    on_success(self.build_animation_from_placements(np.copy(orig_board), [*prev_sequence, *sequence]))
+                    result = SimulationResult.FAILURE
         return result, sequence
 
 
@@ -209,10 +208,10 @@ class TetrisAgent:
             apply_shape(shape, anchor, board, True)
         return frames
     
-    def run_simulation(self, board):
-        result, placements = self.find_placements(board)
-        if result == EndResult.SUCCESS:
-            return EndResult.SUCCESS, self.build_animation_from_placements(board, placements)
-        else:
-            return EndResult.FAILURE, []
+    # def run_simulation(self, board):
+    #     result, placements = self.find_placements(board)
+    #     if result == SimulationResult.SUCCESS:
+    #         return SimulationResult.SUCCESS, self.build_animation_from_placements(board, placements)
+    #     else:
+    #         return SimulationResult.FAILURE, []
 

@@ -15,11 +15,13 @@ false_negatives = in_msg["false_negatives"]
 enforce_gravity = in_msg["enforce_gravity"]
 log("Running...")
 
+def send_frames(animation):
+  data = {}
+  data["frames"] = animation
+  send(data)
+
 start_time = time.perf_counter()
 board = board_from_grid(arr)
 agent = TetrisAgent([-1, -1, -1], board.shape, false_positives, false_negatives, enforce_gravity)
-result, animation = agent.run_simulation(board)
-data = {}
-data["frames"] = animation
+result, animation = agent.run_simulation(board, board, on_success=send_frames)
 log(time.perf_counter() - start_time)
-send(data)

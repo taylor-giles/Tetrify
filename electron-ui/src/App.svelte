@@ -6,9 +6,10 @@
     getNumCores,
   } from "../../engine/runEngine.cjs";
   import ColorGrid from "./components/ColorGrid.svelte";
+  import AnimationPlayer from "./components/AnimationPlayer.svelte";
+  import OptionsPanel from "./components/OptionsPanel.svelte";
 
   let grid = [];
-  let colorIndexGrid = [];
   let backgroundColor = "#000000";
   let borderColor = "#000000";
   let borderThickness = 1;
@@ -26,32 +27,48 @@
   let width = 16;
   let height = 16;
   let animationSpeed = 90;
-  let currAnimationNumber = 0;
-  let colorGrid = [];
+  let frameDelay = 0;
 
   let falsePositives = 0;
   let falseNegatives = 0;
   let enforceGravity = true;
   let numThreads = getNumCores() / 2;
+  let removeDuplicates = true;
 
   let isRunning = false;
-  let didRun = false;
-  let didSucceed = false;
   let timeTakenStr = "0";
   let simulationTimer = null;
+  let showLastFrames = false;
+  let animations = [];
+  let lastFrames = [];
+  let lastFrameHashes = [];
+  let animationDisplay; //Reference to the AnimationPlayer (gets bound later)
 
-  // Make sure option values stay defined & positive
-  $: if (!falsePositives || falsePositives < 0) {
-    falsePositives = 0;
+  //The number of the current animation being shown. 
+  //Note that this is 1-indexed, to make displaying easier - use playAnimation(currAnimationNumber-1)
+  let currAnimationNumber = -1;
+
+  //To play an animation, just set this variable. The AnimationPlayer will auto-update.
+  let currAnimation;
+
+  //Sets the currAnimation variable to trigger an update of the AnimationPlayer.\
+  function playAnimation(index){
+    currAnimation = showLastFrames ? lastFrames[index] : animations[index];
   }
-  $: if (!falseNegatives || falseNegatives < 0) {
-    falseNegatives = 0;
+
+  //Automatically play animation when animation number or showLastFrames setting changes
+  $: {
+    showLastFrames;
+    currAnimationNumber;
+    playAnimation(currAnimationNumber-1);
   }
-  $: if (!numThreads || numThreads < 1) {
-    numThreads = 1;
+
+  //Make sure animation number stays within bounds
+  $: if (!currAnimationNumber || currAnimationNumber < 1) {
+    currAnimationNumber = 1;
   }
-  $: if (numThreads > getNumCores()) {
-    numThreads = getNumCores();
+  $: if (currAnimationNumber > animations.length) {
+    currAnimationNumber = animations.length;
   }
 
   // Compute frame delay from selected animation speed
@@ -62,11 +79,24 @@
    * @param animationFrames A list of width x height frames where each element in the frame contains the name of the piece used to fill that slot
    */
   function onSuccess(animationFrames, time) {
-    didSucceed = true;
-    currAnimationNumber++;
-    playAnimation(animationFrames, currAnimationNumber);
+    let lastFrame = animationFrames[animationFrames.length-1]
+
+    //Add this animation to the list if either allowing duplicates or there is no other known animation with the same last frame as this animation
+    if(!removeDuplicates || !lastFrameHashes.includes(JSON.stringify(lastFrame))){
+      animations = [...animations, animationFrames];
+      lastFrames = [...lastFrames, [lastFrame]]
+      lastFrameHashes.push(JSON.stringify(lastFrame))
+    }
+
+    //If nothing is currently playing, play the first animation
+    if (currAnimationNumber < 1) {
+      playNextAnimation();
+    }
   }
 
+  /**
+   * Runs when simulation finishes, meaning all threads exited.
+   */
   function onEnd() {
     isRunning = false;
 
@@ -78,8 +108,7 @@
 
   function runSimulation() {
     isRunning = true;
-    didRun = true;
-    stopAnimation();
+    clearAnimations();
     runEngine(
       grid,
       falsePositives,
@@ -93,7 +122,9 @@
 
     // Start the timer
     let timeStart = Date.now();
-    simulationTimer = setInterval(() => {timeTakenStr = ((Date.now() - timeStart) / 1000).toFixed(2);}, 50)
+    simulationTimer = setInterval(() => {
+      timeTakenStr = ((Date.now() - timeStart) / 1000).toFixed(2);
+    }, 50);
   }
 
   function invertGrid() {
@@ -105,46 +136,27 @@
     grid = grid;
   }
 
-  function stopAnimation() {
-    //Change animation number to stop the animation from playing
-    currAnimationNumber++;
+  function clearAnimations() {
+    //Stop the animation
+    animationDisplay.stop();
 
-    // Reset display
-    for (let i = 0; i < colorGrid.length; i++) {
-      for (let j = 0; j < colorGrid[i].length; j++) {
-        colorGrid[i][j] = backgroundColor;
-      }
-    }
+    //Reset animation number
+    currAnimationNumber = 0;
 
-    //Set the colorGrid var to trigger Svelte autoupdate
-    colorGrid = colorGrid;
+    //Clear animations lists
+    animations = [];
+    lastFrames = [];
+    lastFrameHashes = [];
   }
 
-  function playAnimation(frames, animationNumber = 0, frameIndex = 0) {
-    if (animationNumber >= currAnimationNumber) {
-      // Build the frame
-      let newColorGrid = [];
-      colorIndexGrid = frames[frameIndex];
-      for (let i = 0; i < colorIndexGrid.length; i++) {
-        let colorRow = [];
-        for (let j = 0; j < colorIndexGrid[i].length; j++) {
-          colorRow.push(getColor(colorIndexGrid[i][j]));
-        }
-        newColorGrid.push(colorRow);
-      }
+  function playNextAnimation() {
+    currAnimationNumber = (currAnimationNumber + 1) % (animations.length+1);
+  }
 
-      //Set the colorGrid var to trigger Svelte autoupdate
-      colorGrid = newColorGrid;
-
-      //Set the timeout to display the next frame
-      setTimeout(() => {
-        playAnimation(
-          frames,
-          animationNumber,
-          (frameIndex + 1) % frames.length
-        );
-      }, frameDelay);
-    }
+  function playPrevAnimation() {
+    currAnimationNumber =
+      (((currAnimationNumber - 1) % (animations.length+1)) + (animations.length+1)) %
+      (animations.length+1);
   }
 
   function getColor(pieceName) {
@@ -163,208 +175,85 @@
         <div>
           Simulating. Time elapsed: {timeTakenStr}s
         </div>
-        <button on:click={stopAllChildren}> Cancel </button>
+        <div>
+          Animations found: {animations.length}
+        </div>
+        <button on:click={stopAllChildren}> Stop </button>
       {/if}
     </div>
     <div id="preview-label">Preview:</div>
-    <ColorGrid
-      bind:width
-      height={height + 6}
-      bind:grid={colorGrid}
-      defaultColor={backgroundColor}
-      cellWidth={`${cellSize}px`}
-      cellHeight={`${cellSize}px`}
-      cellBorder={`${borderThickness}px solid ${borderColor}`}
-      cellMargin={`${cellSpacing}px`}
+
+    <AnimationPlayer
+      bind:this={animationDisplay}
+      frames={currAnimation}
+      {width}
+      {height}
+      {backgroundColor}
+      {cellSize}
+      {cellSpacing}
+      {borderColor}
+      {borderThickness}
+      {frameDelay}
+      {getColor}
     />
+    <div id="preview-buttons-container">
+      <button
+        class="direction-button"
+        disabled={animations.length <= 1}
+        on:click={playPrevAnimation}
+      >
+        &lt;
+      </button>
+      <div>
+        <input
+          type="number"
+          min="1"
+          max={animations.length}
+          bind:value={currAnimationNumber}
+          id="animation-number-input"
+          disabled={animations.length <= 1}
+        />
+        / {animations.length}
+      </div>
+      <button
+        class="direction-button"
+        disabled={animations.length <= 1}
+        on:click={playNextAnimation}
+      >
+        &gt;
+      </button>
+    </div>
+    <tr>
+      <td>
+          <div>Show Only Last Frames:</div>
+      </td>
+      <td>
+          <input
+              type="checkbox"
+              bind:checked={showLastFrames}
+              class="checkbox-input"
+          />
+      </td>
+  </tr>
   </div>
 
-  <div id="options-container">
-    <div class="region-header">Options</div>
-    <div class="section-header">Simulation Options</div>
-    {#if isRunning}
-      <div>(Disabled while simulation is running)</div>
-    {/if}
-    <table>
-      <tr>
-        <td>
-          <div class="option-label">False Positives:</div>
-        </td>
-        <td>
-          <input
-            type="number"
-            min="0"
-            bind:value={falsePositives}
-            class="number-input"
-            disabled={isRunning}
-          />
-        </td>
-      </tr>
-      <tr>
-        <td>
-          <div class="option-label">False Negatives:</div>
-        </td>
-        <td>
-          <input
-            type="number"
-            min="0"
-            bind:value={falseNegatives}
-            class="number-input"
-            disabled={isRunning}
-          />
-        </td>
-      </tr>
-      <tr>
-        <td>
-          <div class="option-label">Enforce Gravity:</div>
-        </td>
-        <td>
-          <input
-            type="checkbox"
-            bind:checked={enforceGravity}
-            class="checkbox-input"
-            disabled={isRunning}
-          />
-        </td>
-      </tr>
-      <tr>
-        <td>
-          <div class="option-label">Number of Threads:</div>
-        </td>
-        <td>
-          <input
-            type="number"
-            min="1"
-            max={getNumCores()}
-            bind:value={numThreads}
-            class="number-input"
-            disabled={isRunning}
-          />
-        </td>
-      </tr>
-    </table>
-
-    <div class="section-header">Block Colors</div>
-    <table>
-      {#each Object.keys(colors) as blockName}
-        <tr>
-          <td>
-            <div class="color-label">
-              "{blockName}" Block:
-            </div>
-          </td>
-          <td>
-            <input
-              type="color"
-              bind:value={colors[blockName]}
-              class="color-input"
-            />
-          </td>
-        </tr>
-      {/each}
-    </table>
-    <div class="section-header">Display Options</div>
-    <table>
-      <tr>
-        <td>
-          <div class="option-label">Canvas Height:</div>
-        </td>
-        <td>
-          <input
-            type="number"
-            min="1"
-            bind:value={height}
-            class="number-input"
-          />
-        </td>
-      </tr>
-      <tr>
-        <td>
-          <div class="option-label">Canvas Width:</div>
-        </td>
-        <td>
-          <input
-            type="number"
-            min="4"
-            bind:value={width}
-            class="number-input"
-          />
-        </td>
-      </tr>
-      <tr>
-        <td>
-          <div class="option-label">Background Color:</div>
-        </td>
-        <td>
-          <input
-            type="color"
-            bind:value={backgroundColor}
-            class="color-input"
-          />
-        </td>
-      </tr>
-      <tr>
-        <td>
-          <div class="option-label">Border Color:</div>
-        </td>
-        <td>
-          <input type="color" bind:value={borderColor} class="color-input" />
-        </td>
-      </tr>
-      <tr>
-        <td>
-          <div class="option-label">Border Thickness:</div>
-        </td>
-        <td>
-          <input
-            type="number"
-            min="0"
-            bind:value={borderThickness}
-            class="number-input"
-          />
-        </td>
-      </tr>
-      <tr>
-        <td>
-          <div class="option-label">Cell Size:</div>
-        </td>
-        <td>
-          <input
-            type="number"
-            min="0"
-            bind:value={cellSize}
-            class="number-input"
-          />
-        </td>
-      </tr>
-      <tr>
-        <td>
-          <div class="option-label">Cell Spacing:</div>
-        </td>
-        <td>
-          <input
-            type="number"
-            min="0"
-            bind:value={cellSpacing}
-            class="number-input"
-          />
-        </td>
-      </tr>
-      <tr>
-        <td>
-          <div class="option-label">Animation Speed:</div>
-        </td>
-        <td>
-          <input
-            type="number"
-            min="0"
-            bind:value={animationSpeed}
-            class="number-input"
-          />
-        </td>
-      </tr>
-    </table>
-  </div>
+  <OptionsPanel
+    bind:isRunning
+    bind:falsePositives
+    bind:falseNegatives
+    bind:enforceGravity
+    bind:numThreads
+    bind:removeDuplicates
+    bind:colors
+    bind:height
+    bind:width
+    bind:backgroundColor
+    bind:borderColor
+    bind:borderThickness
+    bind:cellSize
+    bind:cellSpacing
+    bind:animationSpeed
+  />
 </main>
 
 <style>
@@ -383,54 +272,22 @@
     padding: 20px;
     overflow-y: auto;
   }
-  #options-container {
-    height: 90vh;
-    width: 300px;
-    padding: 20px;
-    border: 2px solid black;
-    border-radius: 20px;
-    white-space: nowrap;
-    overflow-y: auto;
-    scrollbar-width: thin;
-  }
   #preview-label {
     margin-top: 50px;
   }
-
-  td {
-    padding-bottom: 10px;
-    padding-inline: 5px;
+  .direction-button {
+    background-color: transparent;
+    border: none;
+    font-family: "Courier New", Courier, monospace;
   }
-  table {
-    margin-bottom: 20px;
-  }
-  .number-input {
-    width: 100px;
+  #animation-number-input {
+    width: 75px;
     margin: 0px;
   }
-  .option-label {
-    height: 100%;
-  }
-  .color-label {
-    font-family: "Courier New", Courier, monospace;
-    margin-left: 5px;
-  }
-  .region-header {
-    font-weight: bold;
-    font-size: 28px;
-    text-align: center;
+  #preview-buttons-container {
+    display: flex;
     width: 100%;
-    margin-bottom: 10px;
-  }
-  .section-header {
-    font-weight: bold;
-    font-size: 20px;
-  }
-  .color-input {
-    border: 1px;
-    margin: 0px 0px 0px 15px;
-    padding: 0;
-    width: 100px;
-    cursor: pointer;
+    justify-content: space-around;
+    margin-top: 5px;
   }
 </style>

@@ -52,7 +52,7 @@ export function runEngine(grid, falsePositives, falseNegatives, enforceGravity, 
   
           //Frames (animation finding was successful)
           if ("frames" in data){
-            console.log(`[${childProcess.pid}] Received animation frames: ${data.frames}`)
+            // console.log(`[${childProcess.pid}] Received animation frames: ${data.frames}`)
             onSuccess(data.frames)
           }
         } catch(e) {
@@ -80,9 +80,6 @@ export function runEngine(grid, falsePositives, falseNegatives, enforceGravity, 
       if(children.length <= 0){
         onEnd();
       }
-
-      //Kill all the other children (if one process ended, either the animation was successfully found, or it is not possible.)
-      stopAllChildren();
     });
 
     //Send the data over stdin

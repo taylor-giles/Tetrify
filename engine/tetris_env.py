@@ -15,7 +15,7 @@ class CellValue(Enum):
 def is_filled(cell_value: CellValue):
     return cell_value == CellValue.FILLED.value or cell_value == CellValue.FALSE_POSITIVE.value
 
-class EndResult(Enum):
+class SimulationResult(Enum):
     NOT_DONE = -1
     SUCCESS = 0
     FAILURE = 1
