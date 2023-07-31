@@ -1,4 +1,7 @@
 <script lang="ts">
+    import { createEventDispatcher } from "svelte";
+    const dispatch = createEventDispatcher();
+
     export let width = "20px",
         height = "20px",
         margin = "0px";
@@ -13,8 +16,9 @@
     $: currentColor = isToggled ? onColor : offColor;
 
     function toggle() {
-        if(!disabled){
+        if (!disabled) {
             isToggled = !isToggled;
+            dispatch("startDrag", isToggled);
         }
     }
 

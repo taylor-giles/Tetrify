@@ -10,6 +10,7 @@
     offColor = "#000000";
   export let allowDrag = true;
   export let disabled = false;
+  let dragType = false; //Used to prevent dragging from always toggling every cell it touches
 
   // Make the grid of booleans to represent the cells
   export let grid = [];
@@ -31,6 +32,10 @@
     grid = grid;
   }
 
+  function onStartDrag(e){
+    dragType = e.detail;
+  }
+
 </script>
 
 <div>
@@ -38,15 +43,16 @@
     <div class="row" style="--height: calc({cellHeight} + {cellMargin} * 2)">
       {#each row as cell}
         <ToggleCell
-          bind:width={cellWidth}
-          bind:height={cellHeight}
-          bind:border={cellBorder}
-          bind:margin={cellMargin}
-          bind:onColor
-          bind:offColor
-          bind:allowDrag
-          bind:disabled
+          width={cellWidth}
+          height={cellHeight}
+          border={cellBorder}
+          margin={cellMargin}
+          {onColor}
+          {offColor}
+          allowDrag={allowDrag && dragType !== cell}
+          {disabled}
           bind:isToggled={cell}
+          on:startDrag={onStartDrag}
         />
       {/each}
     </div>
