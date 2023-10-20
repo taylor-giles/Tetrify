@@ -1,21 +1,24 @@
 <script lang="ts">
+  import { makeAndSaveGif, generateImageURL } from "../tetrifyImageUtils";
   import ColorGrid from "./ColorGrid.svelte";
 
   let colorGrid = [];
-  export let width;
-  export let height;
-  export let backgroundColor;
-  export let cellSize;
-  export let borderThickness;
-  export let borderColor;
-  export let cellSpacing;
-  export let getColor: (pieceName: string) => string;
+  export let width: number;
+  export let height: number;
+  export let backgroundColor: string;
+  export let cellHeight: number;
+  export let cellWidth: number;
+  export let borderThickness: number;
+  export let borderColor: string;
 
-  export let frames;
-  export let frameDelay;
+  export let getColor: (cellValue: any) => string;
+
+  export let frames: number[][];
+  export let frameDelay: number;
   export let frameIndex = 0;
 
-  let animationInterval;
+  let animationInterval: any;
+  let mainView: any; //Reference to ColorGrid (gets bound later)
 
   //Apply new frameDelay whenever it changes by re-creating the interval (restart)
   $: {
@@ -29,7 +32,7 @@
     reset();
   }
 
-  function displayFrame(frame) {
+  function computeColorGrid(frame) {
     // Build the frame
     let newColorGrid = [];
     let colorIndexGrid = frame;
@@ -40,9 +43,12 @@
       }
       newColorGrid.push(colorRow);
     }
+    return newColorGrid;
+  }
 
+  function displayFrame(frame) {
     //Set the colorGrid var to trigger Svelte autoupdate
-    colorGrid = newColorGrid;
+    colorGrid = computeColorGrid(frame);
   }
 
   export function pause() {
@@ -75,7 +81,7 @@
   export function clear() {
     //Build a frame of all background and display it
     displayFrame(
-      Array.from({ length: height + 6 }, () =>
+      Array.from({ length: height }, () =>
         Array.from({ length: width }, () => backgroundColor)
       )
     );
@@ -86,17 +92,34 @@
     frameIndex = 0;
     clear();
   }
+
+  export async function saveGif() {
+    let frameURLs = [];
+    for (let frame of frames) {
+      frameURLs.push(
+        await generateImageURL(
+          computeColorGrid(frame),
+          borderColor,
+          borderThickness,
+          cellHeight,
+          cellWidth
+        )
+      );
+    }
+    makeAndSaveGif(frameURLs, frameDelay);
+  }
 </script>
 
 <ColorGrid
-  bind:width
-  height={height + 6}
+  bind:this={mainView}
+  {width}
+  {height}
   bind:grid={colorGrid}
   defaultColor={backgroundColor}
-  cellWidth={`${cellSize}px`}
-  cellHeight={`${cellSize}px`}
-  cellBorder={`${borderThickness}px solid ${borderColor}`}
-  cellMargin={`${cellSpacing}px`}
+  {cellWidth}
+  {cellHeight}
+  cellBorderThickness={borderThickness}
+  cellBorderColor={borderColor}
 />
 
 <style>

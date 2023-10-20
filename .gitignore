@@ -26,3 +26,5 @@ dist-ssr
 
 .vite
 build
+
+__pycache__/

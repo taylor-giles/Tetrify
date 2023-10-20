@@ -1,6 +1,6 @@
 import numpy as np
 import random
-from tetris_env import TetrisAction, SimulationResult, set_piece, get_shape_grid, is_occupied, has_dropped, rotated, piece_match, count_stragglers, count_false_positives, count_false_negatives, count_buried_false_negatives, pieces, apply_shape, print_board, take_action
+from tetris_env import TetrisAction, SimulationResult, set_piece, get_shape_grid, is_occupied, has_dropped, rotated, count_stragglers, count_false_positives, count_false_negatives, count_buried_false_negatives, pieces, apply_shape, take_action
 from utils import log
 from collections.abc import Callable
 

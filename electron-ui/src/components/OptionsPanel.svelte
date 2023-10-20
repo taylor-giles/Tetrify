@@ -1,7 +1,14 @@
 <script lang="ts">
     import { getNumCores } from "../../../engine/runEngine.cjs";
+    import {
+        AppContextMode,
+        MAX_HEIGHT,
+        MAX_WIDTH,
+        MIN_HEIGHT,
+        MIN_WIDTH,
+    } from "../App.svelte";
 
-    export let isRunning: boolean;
+    export let currentMode: AppContextMode;
     export let falsePositives: number;
     export let falseNegatives: number;
     export let enforceGravity: boolean;
@@ -13,29 +20,95 @@
     export let backgroundColor: string;
     export let borderColor: string;
     export let borderThickness: number;
-    export let cellSize: number;
+    export let cellWidth: number;
+    export let cellHeight: number;
     export let animationSpeed: number;
 
-    // Make sure option values stay defined & positive
+    // Make sure option values stay defined and within range
     $: if (!falsePositives || falsePositives < 0) {
         falsePositives = 0;
     }
     $: if (!falseNegatives || falseNegatives < 0) {
         falseNegatives = 0;
     }
+
     $: if (!numThreads || numThreads < 1) {
         numThreads = 1;
     }
     $: if (numThreads > getNumCores()) {
         numThreads = getNumCores();
     }
+
+    $: if (!height || height < MIN_HEIGHT) {
+        height = MIN_HEIGHT;
+    }
+    $: if (height > MAX_HEIGHT) {
+        height = MAX_HEIGHT;
+    }
+
+    $: if (!width || width < MIN_WIDTH) {
+        width = MIN_WIDTH;
+    }
+    $: if (width > MAX_WIDTH) {
+        width = MAX_WIDTH;
+    }
+
+    $: if (!cellWidth || cellWidth < 0) {
+        cellWidth = 0;
+    }
+    $: if (!cellHeight || cellHeight < 0) {
+        cellHeight = 0;
+    }
+
+    $: if (!borderThickness || borderThickness < 0) {
+        borderThickness = 0;
+    }
+    $: if (borderThickness > Math.min(cellHeight, cellWidth) / 2) {
+        borderThickness = Math.min(cellHeight, cellWidth) / 2;
+    }
 </script>
 
 <div id="options-container">
     <div class="region-header">Options</div>
+    <div class="section-header">Canvas Options</div>
+    {#if currentMode != AppContextMode.DRAWING}
+        <div>(Locked outside edit mode)</div>
+    {/if}
+    <table>
+        <tr>
+            <td>
+                <div class="option-label">Canvas Height (cells):</div>
+            </td>
+            <td>
+                <input
+                    type="number"
+                    min={MIN_HEIGHT}
+                    max={MAX_HEIGHT}
+                    bind:value={height}
+                    disabled={currentMode != AppContextMode.DRAWING}
+                    class="number-input"
+                />
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div class="option-label">Canvas Width (cells):</div>
+            </td>
+            <td>
+                <input
+                    type="number"
+                    min={MIN_WIDTH}
+                    max={MAX_WIDTH}
+                    bind:value={width}
+                    disabled={currentMode != AppContextMode.DRAWING}
+                    class="number-input"
+                />
+            </td>
+        </tr>
+    </table>
     <div class="section-header">Simulation Options</div>
-    {#if isRunning}
-        <div>(Disabled while simulation is running)</div>
+    {#if currentMode == AppContextMode.RUNNING}
+        <div>(Locked while simulation is running)</div>
     {/if}
     <table>
         <tr>
@@ -48,7 +121,8 @@
                     min="0"
                     bind:value={falsePositives}
                     class="number-input"
-                    disabled={isRunning}
+                    title="Hi there"
+                    disabled={currentMode == AppContextMode.RUNNING}
                 />
             </td>
         </tr>
@@ -62,7 +136,7 @@
                     min="0"
                     bind:value={falseNegatives}
                     class="number-input"
-                    disabled={isRunning}
+                    disabled={currentMode == AppContextMode.RUNNING}
                 />
             </td>
         </tr>
@@ -75,7 +149,7 @@
                     type="checkbox"
                     bind:checked={enforceGravity}
                     class="checkbox-input"
-                    disabled={isRunning}
+                    disabled={currentMode == AppContextMode.RUNNING}
                 />
             </td>
         </tr>
@@ -90,7 +164,7 @@
                     max={getNumCores()}
                     bind:value={numThreads}
                     class="number-input"
-                    disabled={isRunning}
+                    disabled={currentMode == AppContextMode.RUNNING}
                 />
             </td>
         </tr>
@@ -103,7 +177,7 @@
                     type="checkbox"
                     bind:checked={removeDuplicates}
                     class="checkbox-input"
-                    disabled={isRunning}
+                    disabled={currentMode == AppContextMode.RUNNING}
                 />
             </td>
         </tr>
@@ -128,34 +202,9 @@
             </tr>
         {/each}
     </table>
+
     <div class="section-header">Display Options</div>
     <table>
-        <tr>
-            <td>
-                <div class="option-label">Canvas Height:</div>
-            </td>
-            <td>
-                <input
-                    type="number"
-                    min="1"
-                    bind:value={height}
-                    class="number-input"
-                />
-            </td>
-        </tr>
-        <tr>
-            <td>
-                <div class="option-label">Canvas Width:</div>
-            </td>
-            <td>
-                <input
-                    type="number"
-                    min="4"
-                    bind:value={width}
-                    class="number-input"
-                />
-            </td>
-        </tr>
         <tr>
             <td>
                 <div class="option-label">Background Color:</div>
@@ -182,12 +231,13 @@
         </tr>
         <tr>
             <td>
-                <div class="option-label">Border Thickness:</div>
+                <div class="option-label">Border Thickness (px):</div>
             </td>
             <td>
                 <input
                     type="number"
                     min="0"
+                    max={Math.min(cellHeight, cellWidth) / 2}
                     bind:value={borderThickness}
                     class="number-input"
                 />
@@ -195,13 +245,26 @@
         </tr>
         <tr>
             <td>
-                <div class="option-label">Cell Size:</div>
+                <div class="option-label">Cell Width (px):</div>
             </td>
             <td>
                 <input
                     type="number"
                     min="0"
-                    bind:value={cellSize}
+                    bind:value={cellWidth}
+                    class="number-input"
+                />
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div class="option-label">Cell Height (px):</div>
+            </td>
+            <td>
+                <input
+                    type="number"
+                    min="0"
+                    bind:value={cellHeight}
                     class="number-input"
                 />
             </td>
@@ -214,6 +277,8 @@
                 <input
                     type="number"
                     min="0"
+                    step="0.1"
+                    max="100"
                     bind:value={animationSpeed}
                     class="number-input"
                 />
@@ -224,14 +289,14 @@
 
 <style>
     #options-container {
-        height: 90vh;
-        width: 300px;
+        height: 100%;
+        width: max-content;
         padding: 20px;
         border: 2px solid black;
         border-radius: 20px;
-        white-space: nowrap;
         overflow-y: auto;
         scrollbar-width: thin;
+        box-sizing: border-box;
     }
 
     td {

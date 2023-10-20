@@ -20,7 +20,7 @@
     defineGrid();
   }
 
-  function defineGrid(){
+  export function defineGrid(){
     grid = []
     for (let i = 0; i < height; i++) {
       let row = [];

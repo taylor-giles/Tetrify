@@ -14,7 +14,7 @@ let children = []
 // A dictionary where the keys are PIDs and the values are strings containing the current message buffer for that child process
 let buffers = {}
 
-export function stopAllChildren(){
+export function stopEngine(){
   children.forEach((child) => child.kill())
 }
 
