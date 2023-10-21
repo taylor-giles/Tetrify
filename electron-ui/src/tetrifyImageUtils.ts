@@ -44,7 +44,28 @@ export async function generateImageURL(frame: string[][], borderColor: string, b
     return canvas.toDataURL();
 }
 
-export async function makeAndSaveGif(frameURLs: string[], delay: number) {
+/**
+ * Downloads the image from the provided URL string
+ * @param imageURL The URL of the image to download
+ */
+export async function saveImageFromURL(imageURL: string){
+    //Create anchor element for link
+    let link = document.createElement('a');
+    link.href = imageURL;
+    link.download = 'tetrify.png';
+
+    //Do the download
+    link.click();
+}
+
+
+/**
+ * Compiles the provided frames into a gif and downloads that gif
+ * @param frameURLs List of image URLs for the frames
+ * @param delay The delay in millis between each frame
+ * @param onProgressUpdate Callback used to pass a progress string back to the caller whenever an update is made. Passes null when process is finished.
+ */
+export async function makeAndSaveGif(frameURLs: string[], delay: number, onProgressUpdate: (update: string | null)=>void) {
     let gif = new GIF({
         workers: 8,
         quality: 10
@@ -66,7 +87,14 @@ export async function makeAndSaveGif(frameURLs: string[], delay: number) {
 
         //Revoke the URL
         URL.revokeObjectURL(url);
+
+        //Send empty progress update
+        onProgressUpdate(null)
     });
+
+    gif.on('progress', (percent) => {
+        onProgressUpdate(`Rendering: ${(percent*100).toFixed(0)}%`)
+    })
 
     //Add the frames to the gif
     for (let frameURL of frameURLs) {
@@ -86,3 +114,4 @@ async function elementLoaded(element: HTMLElement): Promise<void> {
         element.onload = () => resolve();
     });
 }
+

@@ -75,7 +75,7 @@
     <div class="region-header">Options</div>
     <div class="section-header">Canvas Options</div>
     {#if currentMode != AppContextMode.DRAWING}
-        <div>(Locked while not editing drawing)</div>
+        <div>(Locked outside edit mode)</div>
     {/if}
     <table>
         <tr>

@@ -1,6 +1,12 @@
 <script lang="ts">
-  import { makeAndSaveGif, generateImageURL } from "../tetrifyImageUtils";
+  import { createEventDispatcher } from "svelte";
+  import {
+    makeAndSaveGif,
+    generateImageURL,
+    saveImageFromURL,
+  } from "../tetrifyImageUtils";
   import ColorGrid from "./ColorGrid.svelte";
+  const dispatch = createEventDispatcher();
 
   let colorGrid = [];
   export let width: number;
@@ -93,7 +99,8 @@
     clear();
   }
 
-  export async function saveGif() {
+  export async function save() {
+    //Generate GIF frames
     let frameURLs = [];
     for (let frame of frames) {
       frameURLs.push(
@@ -105,8 +112,16 @@
           cellWidth
         )
       );
+      dispatch("gifProgressUpdate", `Generating: ${((frames.indexOf(frame) / frames.length) * 100).toFixed(0)}%`);
     }
-    makeAndSaveGif(frameURLs, frameDelay);
+    dispatch("gifProgressUpdate", null)
+
+    //Save the gif (or image, if there is only one frame)
+    if (frameURLs.length > 1) {
+      makeAndSaveGif(frameURLs, frameDelay, (update) => {dispatch("gifProgressUpdate", update)});
+    } else {
+      saveImageFromURL(frameURLs[0]);
+    }
   }
 </script>
 

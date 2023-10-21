@@ -22,6 +22,7 @@
 
   let currentMode: AppContextMode = AppContextMode.DRAWING;
 
+  //Canvas & display options
   let grid = [];
   let backgroundColor = "#000000";
   let borderColor = "#000000";
@@ -39,20 +40,23 @@
   };
   let width = 16;
   let height = 16;
-  let animationSpeed = 99;
-  let frameDelay = 0;
 
+  //Simulation options
   let falsePositives = 0;
   let falseNegatives = 0;
   let enforceGravity = true;
   let numThreads = 1;
   let removeDuplicates = true;
 
+  //Simulation/animation variables
   let timeTakenStr = "0";
   let simulationTimer = null;
   let showLastFrames = false;
+  let gifProgress: string | null = null;
   let animations = [];
   let lastFrameHashes = [];
+  let animationSpeed = 99;
+  let frameDelay = 0;
   let animationDisplay; //Reference to the AnimationPlayer (gets bound later)
   let canvas; //Reference to the ToggleGrid art canvas (gets bound later)
 
@@ -66,8 +70,8 @@
   //Sets the currAnimation variable to trigger an update of the AnimationPlayer.
   function playAnimation(index: number) {
     currAnimation = showLastFrames
-    ? [animations[index][animations[index]?.length - 1]]
-    : animations[index];
+      ? [animations[index][animations[index]?.length - 1]]
+      : animations[index];
   }
 
   //Automatically play animation when animation number or showLastFrames setting changes
@@ -88,6 +92,9 @@
   // Compute frame delay from selected animation speed
   $: frameDelay = 315 - animationSpeed * 3;
 
+  /**
+   * Clears canvas and animations, and starts drawing mode
+   */
   function restart() {
     clearAnimations();
     canvas.defineGrid();
@@ -95,7 +102,8 @@
   }
 
   /**
-   * Runs when simulation successfully produces an animation
+   * Runs when simulation successfully produces an animation.
+   * Adds the new animation to the list if it is not a duplicate or duplicates are allowed.
    * @param animationFrames A list of width x height frames where each element in the frame contains the name of the piece used to fill that slot
    */
   function onSuccess(animationFrames) {
@@ -145,10 +153,13 @@
     // Start the timer
     let timeStart = Date.now();
     simulationTimer = setInterval(() => {
-      let seconds = ((Date.now() - timeStart) / 1000)
-      let minutes = (seconds / 60) | 0
-      let hours = (minutes / 60) | 0
-      timeTakenStr = (hours > 0 ? `${hours}h ` : "") + (minutes > 0 ? `${(minutes - hours*60)}m ` : "") + (`${(seconds - minutes*60).toFixed(2)}s`)
+      let seconds = (Date.now() - timeStart) / 1000;
+      let minutes = (seconds / 60) | 0;
+      let hours = (minutes / 60) | 0;
+      timeTakenStr =
+        (hours > 0 ? `${hours}h ` : "") +
+        (minutes > 0 ? `${minutes - hours * 60}m ` : "") +
+        `${(seconds - minutes * 60).toFixed(2)}s`;
     }, 50);
   }
 
@@ -176,6 +187,12 @@
   function getColor(pieceName) {
     return colors[pieceName] ?? backgroundColor;
   }
+
+  function onGifProgressUpdate(e) {
+    gifProgress = e.detail;
+  }
+
+  $:console.log(gifProgress)
 </script>
 
 <main>
@@ -209,7 +226,13 @@
     </div>
     <div id="button-panel">
       {#if currentMode == AppContextMode.DRAWING}
-        <button on:click={() => {canvas.invertGrid()}}> Invert </button>
+        <button
+          on:click={() => {
+            canvas.invertGrid();
+          }}
+        >
+          Invert
+        </button>
         <button on:click={restart}> Clear </button>
         <button on:click={runSimulation}> Animate! </button>
       {:else if currentMode == AppContextMode.RUNNING}
@@ -244,63 +267,71 @@
         {borderThickness}
         {frameDelay}
         {getColor}
+        on:gifProgressUpdate={onGifProgressUpdate}
       />
-      <div id="preview-buttons-container">
-        <button
-          class="direction-button"
-          disabled={animations.length <= 1}
-          on:click={playPrevAnimation}
-        >
-          &lt;
-        </button>
+      {#if gifProgress}
         <div>
-          <input
-            type="number"
-            min="1"
-            max={animations.length}
-            bind:value={currAnimationNumber}
-            id="animation-number-input"
-            disabled={animations.length <= 1}
-          />
-          / {animations.length}
+          Generating GIF. {gifProgress}
         </div>
-        <button
-          class="direction-button"
-          disabled={animations.length <= 1}
-          on:click={playNextAnimation}
-        >
-          &gt;
-        </button>
-      </div>
+      {:else}
+        <div id="preview-buttons-container">
+          <button
+            class="direction-button"
+            disabled={animations.length <= 1}
+            on:click={playPrevAnimation}
+          >
+            &lt;
+          </button>
+          <div>
+            <input
+              type="number"
+              min="1"
+              max={animations.length}
+              bind:value={currAnimationNumber}
+              id="animation-number-input"
+              disabled={animations.length <= 1}
+            />
+            / {animations.length}
+          </div>
+          <button
+            class="direction-button"
+            disabled={animations.length <= 1}
+            on:click={playNextAnimation}
+          >
+            &gt;
+          </button>
+        </div>
 
-      <tr>
-        <td>
-          <input
-            type="checkbox"
-            bind:checked={showLastFrames}
-            class="checkbox-input"
+        <tr>
+          <td>
+            <input
+              type="checkbox"
+              bind:checked={showLastFrames}
+              class="checkbox-input"
+              disabled={animations.length < 1}
+            />
+          </td>
+          <td>
+            <div>Show Only Final Board State</div>
+          </td>
+        </tr>
+
+        <div>
+          <button
             disabled={animations.length < 1}
-          />
-        </td>
-        <td>
-          <div>Show Only Final Board State</div>
-        </td>
-      </tr>
-
-      <div>
-        <button
-          disabled={animations.length < 1}
-          on:click={() => {
-            animationDisplay.saveGif();
-          }}
-        >
-          {#if showLastFrames}
-            Save Image
-          {:else}
-            Save Animation Gif
-          {/if}
-        </button>
-      </div>
+            on:click={() => {
+              gifProgress = "Generating GIF...."
+              animationDisplay.save();
+            }}
+          >
+            {#if showLastFrames}
+              Save Image
+            {:else}
+              Save Animation GIF
+            {/if}
+          </button>
+        </div>
+      {/if}
     </div>
   {:else}
     <div id="help-text">
