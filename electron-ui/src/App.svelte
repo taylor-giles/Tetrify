@@ -6,6 +6,7 @@
   }
 
   //30x30 is the largest possible grid that can be animated without running into recursion errors
+  //Any width lower than 8 causes buggy behavior
   export const MAX_WIDTH = 30;
   export const MAX_HEIGHT = 30;
   export const MIN_WIDTH = 8;
@@ -65,8 +66,8 @@
   //Sets the currAnimation variable to trigger an update of the AnimationPlayer.
   function playAnimation(index: number) {
     currAnimation = showLastFrames
-      ? [animations[index][animations[index]?.length - 1]]
-      : animations[index];
+    ? [animations[index][animations[index]?.length - 1]]
+    : animations[index];
   }
 
   //Automatically play animation when animation number or showLastFrames setting changes
@@ -217,6 +218,7 @@
         <button on:click={runSimulation}> Re-Animate</button>
         <button
           on:click={() => {
+            clearAnimations();
             currentMode = AppContextMode.DRAWING;
           }}
         >
