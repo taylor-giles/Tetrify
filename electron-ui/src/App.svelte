@@ -17,6 +17,7 @@
   import { runEngine, stopEngine } from "../../engine/runEngine.cjs";
   import AnimationPlayer from "./components/AnimationPlayer.svelte";
   import OptionsPanel from "./components/OptionsPanel.svelte";
+  import HelpText from "./components/HelpText.svelte";
 
   let currentMode: AppContextMode = AppContextMode.DRAWING;
 
@@ -58,13 +59,13 @@
   //Note that this is 1-indexed, to make displaying easier - use playAnimation(currAnimationNumber-1)
   let currAnimationNumber = 0;
 
-  //To play an animation, just set this variable. The AnimationPlayer will auto-update.
+  //The AnimationPlayer auto-updates to display this animation
   let currAnimation;
 
   //Sets the currAnimation variable to trigger an update of the AnimationPlayer.
   function playAnimation(index: number) {
     currAnimation = showLastFrames
-      ? [animations[index][animations[index].length - 1]]
+      ? [animations[index][animations[index]?.length - 1]]
       : animations[index];
   }
 
@@ -84,7 +85,7 @@
   }
 
   // Compute frame delay from selected animation speed
-  $: frameDelay = 1000 - animationSpeed * 10;
+  $: frameDelay = 315 - animationSpeed * 3;
 
   function restart() {
     clearAnimations();
@@ -96,7 +97,7 @@
    * Runs when simulation successfully produces an animation
    * @param animationFrames A list of width x height frames where each element in the frame contains the name of the piece used to fill that slot
    */
-  function onSuccess(animationFrames, time) {
+  function onSuccess(animationFrames) {
     let lastFrame = animationFrames[animationFrames.length - 1];
 
     //Add this animation to the list if either allowing duplicates or there is no other known animation with the same last frame as this animation
@@ -143,17 +144,11 @@
     // Start the timer
     let timeStart = Date.now();
     simulationTimer = setInterval(() => {
-      timeTakenStr = ((Date.now() - timeStart) / 1000).toFixed(2);
+      let seconds = ((Date.now() - timeStart) / 1000)
+      let minutes = (seconds / 60) | 0
+      let hours = (minutes / 60) | 0
+      timeTakenStr = (hours > 0 ? `${hours}h ` : "") + (minutes > 0 ? `${(minutes - hours*60)}m ` : "") + (`${(seconds - minutes*60).toFixed(2)}s`)
     }, 50);
-  }
-
-  function invertGrid() {
-    for (let i = 0; i < height; i++) {
-      for (let j = 0; j < width; j++) {
-        grid[i][j] = !grid[i][j];
-      }
-    }
-    grid = grid;
   }
 
   function clearAnimations() {
@@ -190,8 +185,8 @@
     {/if}
 
     <ToggleGrid
-      {width}
-      bind:height
+      width={width <= MAX_WIDTH ? width : MAX_WIDTH}
+      height={height <= MAX_HEIGHT ? height : MAX_HEIGHT}
       bind:grid
       disabled={currentMode != AppContextMode.DRAWING}
       bind:this={canvas}
@@ -199,13 +194,13 @@
     <div id="result-text-panel">
       {#if currentMode == AppContextMode.RUNNING}
         <div>
-          Simulating. Time elapsed: {timeTakenStr}s
+          Simulating. Time elapsed: {timeTakenStr}
         </div>
         <div>
           Animations found: {animations.length}
         </div>
       {:else if currentMode == AppContextMode.STOPPED}
-        <div><b>Simulation complete.</b> Time elapsed: {timeTakenStr}s</div>
+        <div><b>Simulation complete.</b> Time elapsed: {timeTakenStr}</div>
         <div>
           Animations found: {animations.length}
         </div>
@@ -213,7 +208,7 @@
     </div>
     <div id="button-panel">
       {#if currentMode == AppContextMode.DRAWING}
-        <button on:click={invertGrid}> Invert </button>
+        <button on:click={() => {canvas.invertGrid()}}> Invert </button>
         <button on:click={restart}> Clear </button>
         <button on:click={runSimulation}> Animate! </button>
       {:else if currentMode == AppContextMode.RUNNING}
@@ -226,13 +221,6 @@
           }}
         >
           Edit Drawing
-        </button>
-        <button
-          on:click={() => {
-            animationDisplay.saveGif();
-          }}
-        >
-          jfklds
         </button>
       {/if}
     </div>
@@ -282,118 +270,39 @@
           &gt;
         </button>
       </div>
+
       <tr>
         <td>
           <input
             type="checkbox"
             bind:checked={showLastFrames}
             class="checkbox-input"
+            disabled={animations.length < 1}
           />
         </td>
         <td>
           <div>Show Only Final Board State</div>
         </td>
       </tr>
+
+      <div>
+        <button
+          disabled={animations.length < 1}
+          on:click={() => {
+            animationDisplay.saveGif();
+          }}
+        >
+          {#if showLastFrames}
+            Save Image
+          {:else}
+            Save Animation Gif
+          {/if}
+        </button>
+      </div>
     </div>
   {:else}
     <div id="help-text">
-      <h2>Welcome to the Tetrify Art Creator!</h2>
-      <p>
-        This app is designed to provide an easy and intuitive interface for
-        generating Tetra-themed animations. It uses an optimized semi-random
-        approach for generating animations, by simulating many possible
-        sequences of block positions until a board state matching the input
-        drawing is found. Read this guide for instructions on using this app and
-        descriptions of the options and processes involved.
-      </p>
-
-      <h4>Drawing</h4>
-      <p>
-        Click and drag in the canvas on the left to draw the desired end-goal
-        image (black cells are background, and white cells are part of the image
-        to Tetrify). The size of the canvas can be changed using the Canvas
-        Height and Canvas Width options on the right, but note that the canvas
-        will be cleared whenever it is resized. Also note that six rows will be
-        added to the top of the canvas in all generated animations to allow room
-        for the blocks to be created, rotated, and moved. If you want to start
-        over at any point, the "Clear" button will reset the canvas back to the
-        default blank state. When you're satisfied, press the "Animate!" button,
-        and the simulator will begin looking for valid ways to Tetrify your
-        artwork.
-      </p>
-
-      <h4>Viewing Results & Customization</h4>
-      <p>
-        As valid animations are simulated, they will appear in the preview
-        window. You can customize the appearance of the animations using the
-        Block Colors and Display Options settings on the right. If multiple
-        valid animations are found, you can use the buttons at the bottom of the
-        preview window to see them all. To see only the final "Tetrified" image,
-        toggle on the "Show Only Final Board State" option.
-
-        It is important to note that many drawings may take hours or longer to
-        fully simulate all animation possibilities. Therefore, it is recommended
-        to interrupt the simulation by pressing "Stop" once satisfied with the
-        generated animations.
-      </p>
-      <p>
-        
-      </p>
-
-      <h4>Simulation Options</h4>
-      <p>
-        Some images are not "Tetrify-able" using the default settings, for
-        various reasons. The Simulation Options on the right are designed to
-        offer greater flexibility, allowing the simulation to "bend the rules"
-        in certain ways to make it possible to Tetrify a wider range of images,
-        through some compromises. Use this guide to better understand why some
-        images are not "Tetrify-able" and how to use these options to work
-        around those restrictions:
-        <li>
-          <b>False Positives</b> - The number of "extra" background cells that the
-          animation is "allowed" to fill with blocks. For example, an image consisting
-          of a line of exactly three cells would not be "Tetrify-able", because there
-          is no Tetrimino that consists of only three cells. However, allowing at
-          least one "false positive" would mean that an extra background cell could
-          be filled, and an animation could be generated. In general, increasing
-          this value will increase the likelihood that an animation will be found,
-          while sacrificing image integrity.
-        </li>
-        <li>
-          <b>False Negatives</b> - The number of image cells that the animation is
-          "allowed" to omit. For example, an image consisting of a line of exactly
-          five cells would not be "Tetrify-able", because there is no way to fill
-          exactly five cells with Tetriminoes. However, allowing at least one "false
-          negative" would mean that the extra cell could be left as background, and
-          an animation could be generated. In general, increasing this value will
-          increase the likelihood that an animation will be found, while sacrificing
-          image integrity.
-        </li>
-        <li>
-          <b>Enforce Gravity</b> - If this option is enabled, then all blocks in
-          the simulation must fall until landing on the bottom of the canvas or another
-          block. However, by disabling this option, it is possible to create animations
-          in which blocks are allowed to remain floating - in this case, the blocks
-          will fall until they either reach the desired location or land on another
-          block, then stop. In general, disabling this option will increase the likelihood
-          that an animation will be found, but the results may look somewhat strange.
-        </li>
-        <li>
-          <b>Number of Threads</b> - Since this app's simulations involve randomized
-          elements, running multiple simulations at the same time can result in finding
-          multiple different animations more quickly. This option allows you to specify
-          how many distinct threads should be used to run simulations. Note that
-          this value cannot exceed the number of available CPU threads, and that
-          increasing this value can result in high CPU usage.
-        </li>
-        <li>
-          <b>Remove Duplicates</b> - It is possible that the simulation may encounter
-          animations with identical final states or, if using multiple threads, identical
-          animations. If this option is enabled, animations with end-states that
-          have already been seen in previously-generated animations will not be saved
-          or shown.
-        </li>
-      </p>
+      <HelpText />
     </div>
   {/if}
 
@@ -429,12 +338,7 @@
   input {
     margin: 0px;
   }
-  h4 {
-    margin-bottom: -15px;
-  }
-  li {
-    margin-top: 8px;
-  }
+
   #result-text-panel {
     margin-top: 5px;
   }

@@ -56,6 +56,7 @@ export function runEngine(grid, falsePositives, falseNegatives, enforceGravity, 
             onSuccess(data.frames)
           }
         } catch(e) {
+          console.error(e)
           console.log(`[${childProcess.pid}] ${msg}`);
         }
       }

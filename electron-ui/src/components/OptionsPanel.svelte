@@ -66,13 +66,16 @@
     $: if (borderThickness > Math.min(cellHeight, cellWidth) / 2) {
         borderThickness = Math.min(cellHeight, cellWidth) / 2;
     }
+    $: if(animationSpeed > 100){
+        animationSpeed = 100;
+    }
 </script>
 
 <div id="options-container">
     <div class="region-header">Options</div>
     <div class="section-header">Canvas Options</div>
     {#if currentMode != AppContextMode.DRAWING}
-        <div>(Locked outside edit mode)</div>
+        <div>(Locked while not editing drawing)</div>
     {/if}
     <table>
         <tr>
@@ -276,8 +279,8 @@
             <td>
                 <input
                     type="number"
-                    min="0"
-                    step="0.1"
+                    min="1"
+                    step="1"
                     max="100"
                     bind:value={animationSpeed}
                     class="number-input"

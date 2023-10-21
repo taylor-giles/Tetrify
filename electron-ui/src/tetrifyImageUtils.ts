@@ -1,4 +1,4 @@
-import { createCanvas, Canvas, PNGStream } from "canvas";
+import { createCanvas, Canvas } from "canvas";
 import GIF from 'gif.js';
 
 // Function to convert a hexadecimal color string to an RGB array

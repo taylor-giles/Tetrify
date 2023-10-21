@@ -32,6 +32,15 @@
     grid = grid;
   }
 
+  export function invertGrid() {
+    for (let i = 0; i < height; i++) {
+      for (let j = 0; j < width; j++) {
+        grid[i][j] = !grid[i][j];
+      }
+    }
+    grid = grid;
+  }
+
   function onStartDrag(e){
     dragType = e.detail;
   }
