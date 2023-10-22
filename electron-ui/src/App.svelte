@@ -19,6 +19,7 @@
   import AnimationPlayer from "./components/AnimationPlayer.svelte";
   import OptionsPanel from "./components/OptionsPanel.svelte";
   import HelpText from "./components/HelpText.svelte";
+  import StopConditionSelector from "./components/StopConditionSelector.svelte";
 
   let currentMode: AppContextMode = AppContextMode.DRAWING;
 
@@ -52,6 +53,11 @@
   //Simulation/animation variables
   let timeTakenStr = "0";
   let simulationTimer = null;
+  let useAutoStop = false;
+  let stopCondition: { time: number; animations: number } = {
+    time: null,
+    animations: null,
+  };
   let showLastFrames = false;
   let gifProgress: string | null = null;
   let animations = [];
@@ -70,9 +76,10 @@
 
   //Sets the currAnimation variable to trigger an update of the AnimationPlayer.
   function playAnimation(index: number) {
-    currAnimation = (showLastFrames && animations.length > 0) 
-      ? [animations[index][animations[index]?.length - 1]]
-      : animations[index];
+    currAnimation =
+      showLastFrames && animations.length > 0
+        ? [animations[index][animations[index]?.length - 1]]
+        : animations[index];
   }
 
   //Automatically play animation when animation number or showLastFrames setting changes
@@ -81,6 +88,8 @@
     currAnimationNumber;
     playAnimation(currAnimationNumber - 1);
   }
+
+  $: console.log(stopCondition)
 
   //Make sure animation number stays within bounds
   $: if (!currAnimationNumber || currAnimationNumber < 1) {
@@ -123,6 +132,15 @@
     if (currAnimationNumber < 1) {
       playNextAnimation();
     }
+
+    //Check the animations stop condition
+    if (
+      useAutoStop &&
+      stopCondition.animations &&
+      animations.length > stopCondition.animations
+    ) {
+      stopEngine();
+    }
   }
 
   /**
@@ -152,6 +170,10 @@
       numThreads
     );
 
+    // Clear stop conditions
+    useAutoStop = false;
+    stopCondition = {time: null, animations: null}
+
     // Start the timer
     let timeStart = Date.now();
     simulationTimer = setInterval(() => {
@@ -162,6 +184,11 @@
         (hours > 0 ? `${hours}h ` : "") +
         (minutes > 0 ? `${minutes - hours * 60}m ` : "") +
         `${(seconds - minutes * 60).toFixed(2)}s`;
+
+      //Check the stop condition time
+      if (useAutoStop && stopCondition.time && seconds >= stopCondition.time) {
+        stopEngine();
+      }
     }, 50);
   }
 
@@ -236,7 +263,26 @@
         <button on:click={restart}> Clear </button>
         <button on:click={runSimulation}> Animate! </button>
       {:else if currentMode == AppContextMode.RUNNING}
-        <button on:click={stopEngine}> Stop </button>
+        <tr>
+          <td>
+            <input
+              type="checkbox"
+              bind:checked={useAutoStop}
+              class="checkbox-input"
+            />
+          </td>
+          <td>
+            <div> Automatic Stop </div>
+          </td>
+        </tr>
+        {#if useAutoStop}
+          <StopConditionSelector
+            on:apply={(e) => {
+              stopCondition = e.detail;
+            }}
+          />
+        {/if}
+        <button on:click={stopEngine}> Stop Now </button>
       {:else if currentMode == AppContextMode.STOPPED}
         <button on:click={runSimulation}> Re-Animate</button>
         <button
@@ -320,7 +366,7 @@
           <button
             disabled={animations.length < 1}
             on:click={() => {
-              gifProgress = "Generating GIF...."
+              gifProgress = "Generating GIF....";
               animationDisplay.save();
             }}
           >
