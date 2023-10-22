@@ -89,8 +89,6 @@
     playAnimation(currAnimationNumber - 1);
   }
 
-  $: console.log(stopCondition)
-
   //Make sure animation number stays within bounds
   $: if (!currAnimationNumber || currAnimationNumber < 1) {
     currAnimationNumber = 1;
@@ -153,8 +151,6 @@
     clearInterval(simulationTimer);
   }
 
-  function onFailure(time) {}
-
   function runSimulation() {
     currentMode = AppContextMode.RUNNING;
     clearAnimations();
@@ -165,7 +161,6 @@
       enforceGravity,
       reduceWellsAndTowers,
       onSuccess,
-      onFailure,
       onEnd,
       numThreads
     );

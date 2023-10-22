@@ -209,8 +209,8 @@ def count_towers(board: np.ndarray):
         tower_height = 0
         for y in reversed(range(board.shape[1])):
             if is_filled(board[x,y][0]):
-                # Check the cell to the left and right. If both are false negatives, this cell is part of a tower.
-                if (x-1 < 0 or board[x-1,y][0] == CellValue.FALSE_NEGATIVE.value) and (x+1 >= board.shape[0] or board[x+1,y][0] == CellValue.FALSE_NEGATIVE.value):
+                # Check the cell to the left and right. If neither are filled, this cell is part of a tower.
+                if (x-1 < 0 or not is_filled(board[x-1,y][0])) and (x+1 >= board.shape[0] or not is_filled(board[x+1,y][0])):
                     tower_height += 1
         output += tower_height // 3
     return output
@@ -222,7 +222,7 @@ def count_ghosts(board: np.ndarray):
 # This function uses DFS to determine the mod4 size of each island of false negatives, 
 #   then returns a tuple containing the number of stragglers and the total number of islands.
 # The number of islands can be used as the lower bound for the number of false positives required to fill all stragglers (one per island).
-# Note that it is not sufficient to say that the stragglers of an island can be filled by a minimum of 4-(island size % 4) false positives, 
+# Note that it is not correct to say that the stragglers of an island can be filled by a minimum of 4-(island size % 4) false positives, 
 #   because it is possible that placing a single block could fill the stragglers of multiple islands (max 3).
 def count_stragglers(board: np.ndarray):
     num_stragglers = 0

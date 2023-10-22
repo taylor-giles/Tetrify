@@ -12,5 +12,6 @@ app.on("ready", () => {
   })
   mainWindow.loadFile(path.join(__dirname, "public/index.html"));
   
-  mainWindow.webContents.openDevTools();
+  //Opens the dev tools window automatically
+  // mainWindow.webContents.openDevTools();
 });

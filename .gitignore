@@ -28,3 +28,4 @@ dist-ssr
 build
 
 __pycache__/
+out/

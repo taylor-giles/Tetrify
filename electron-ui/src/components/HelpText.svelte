@@ -87,11 +87,9 @@
             <b>Enforce Gravity</b> - If this option is enabled, then all blocks in
             the simulation must fall until landing on the bottom of the canvas or
             another block. However, by disabling this option, it is possible to create
-            animations in which blocks are allowed to remain floating - in this case,
-            the blocks will fall until they either reach the desired location or
-            land on another block, then stop. In general, disabling this option will
-            increase the likelihood that an animation will be found, but simulation
-            time will also increase.
+            animations in which blocks are allowed to remain floating, at the cost
+            of increased runtime. Disable this option if your drawing includes floating
+            blocks.
         </li>
         <li>
             <b>Reduce Wells & Towers</b> - In animations made from large drawings,
@@ -116,6 +114,24 @@
             identical animations. If this option is enabled, animations with end-states
             that have already been seen in previously-generated animations will not
             be saved or shown.
+        </li>
+    </p>
+    <h3>TIPS</h3>
+    <p>
+        Here are some tips to help you get the most out of Tetrify:
+        <li>
+            When possible, try to make sure that the number of cells in each
+            part of your drawing is a multiple of four. This ensures that the
+            simulation does not fail immediately without false positives/negatives.
+        </li>
+        <li>
+            If your drawing does not have any "floating" parts, put it at the
+            bottom of the canvas, and keep the "Enforce Gravity" option enabled.
+            This will reduce unnecessary computation & runtime.
+        </li>
+        <li>
+            Keep the canvas as small as possible for your drawing. Increasing
+            the canvas size increases runtime.
         </li>
     </p>
 </main>
