@@ -114,12 +114,12 @@
       );
       dispatch("gifProgressUpdate", `Generating: ${((frames.indexOf(frame) / frames.length) * 100).toFixed(0)}%`);
     }
-    dispatch("gifProgressUpdate", null)
-
+    
     //Save the gif (or image, if there is only one frame)
     if (frameURLs.length > 1) {
       makeAndSaveGif(frameURLs, frameDelay, (update) => {dispatch("gifProgressUpdate", update)});
     } else {
+      dispatch("gifProgressUpdate", null)
       saveImageFromURL(frameURLs[0]);
     }
   }

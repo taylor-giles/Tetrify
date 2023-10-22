@@ -94,6 +94,15 @@
             time will also increase.
         </li>
         <li>
+            <b>Reduce Wells & Towers</b> - In animations made from large drawings,
+            it is common to see many I-blocks stacked on top of each other. Enabling
+            this option will instruct the simulation to avoid making any wells or
+            towers, which subsequently reduces the number of excess I-blocks used.
+            However, the addition of these features can increase runtime of large
+            or complicated drawings. Enable this if you notice excessive I-blocks
+            in your animations.
+        </li>
+        <li>
             <b>Number of Threads</b> - Since this app's simulations involve randomized
             elements, running multiple simulations at the same time can result in
             finding multiple different animations more quickly. This option allows

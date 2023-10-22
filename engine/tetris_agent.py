@@ -1,19 +1,8 @@
 import numpy as np
 import random
-from tetris_env import TetrisAction, SimulationResult, set_piece, get_shape_grid, is_occupied, has_dropped, rotated, count_stragglers, count_false_positives, count_false_negatives, count_buried_false_negatives, pieces, apply_shape, take_action
+from tetris_env import TetrisAction, SimulationResult, set_piece, get_shape_grid, is_occupied, has_dropped, rotated, count_stragglers, count_wells, count_towers, count_false_positives, count_false_negatives, count_buried_false_negatives, pieces, apply_shape, take_action
 from utils import log
 from collections.abc import Callable
-
-features = [count_false_positives, count_false_negatives, count_buried_false_negatives]
-weights = [-1, -1]
-
-def get_features(_board):
-    # Copy the board
-    board = np.copy(_board)
-
-    # Given a board, return the values of each feature of that board
-    return [feature(board) for feature in features]
-
 
 # Returns the optimal (ordered) sequence of actions to achieve the desired placement starting from the current state.
 def generate_action_sequence(placement, board, shape, anchor):
@@ -50,18 +39,34 @@ def generate_action_sequence(placement, board, shape, anchor):
 
 
 class TetrisAgent:
-    def __init__(self, parameters, board_shape, allowable_false_positives: int, allowable_false_negatives: int, enforce_gravity=True):
+    def __init__(self, board_shape, allowable_false_positives: int, allowable_false_negatives: int, enforce_gravity=True, reduce_Is=True):
         self.board_width = board_shape[0]
         self.board_height = board_shape[1]
-        self.parameters = parameters
         self.current_state = (None, None, None, None)
         self.allowable_false_positives = allowable_false_positives
         self.allowable_false_negatives = allowable_false_negatives
         self.enforce_gravity = enforce_gravity
 
+        # List of features to be used to evaluate state values
+        self.features: list = [count_false_positives, count_false_negatives, count_buried_false_negatives]
+        if reduce_Is:
+            self.features = [*self.features, count_wells, count_towers]
+        
+        # Parameters (each feature is weighted equally negatively)
+        # NOTE - If any ML were to be introduced to this project, optimizing these weights would be a good starting point
+        self.parameters = [-1 for _ in self.features]
+
+    def get_features(self, _board):
+        # Copy the board
+        board = np.copy(_board)
+
+        # Given a board, return the values of each feature of that board
+        return [feature(board) for feature in self.features]
+
+
     def state_value(self, board):
         # Given a board and a list of feature weights (parameters), return the summed "goodness" value of the board
-        return sum([feature*weight for feature, weight in zip(get_features(board), self.parameters)])
+        return sum([feature*weight for feature, weight in zip(self.get_features(board), self.parameters)])
     
     # Returns a list of all possible placements for the given shape on the given board.
     # Placements are given as a tuple (score, shape, anchor) where those values are the position for the piece and the corresponding score for that position, as decided by this agent

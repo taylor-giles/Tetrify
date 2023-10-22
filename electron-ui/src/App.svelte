@@ -47,6 +47,7 @@
   let enforceGravity = true;
   let numThreads = 1;
   let removeDuplicates = true;
+  let reduceWellsAndTowers = false;
 
   //Simulation/animation variables
   let timeTakenStr = "0";
@@ -69,7 +70,7 @@
 
   //Sets the currAnimation variable to trigger an update of the AnimationPlayer.
   function playAnimation(index: number) {
-    currAnimation = showLastFrames
+    currAnimation = (showLastFrames && animations.length > 0) 
       ? [animations[index][animations[index]?.length - 1]]
       : animations[index];
   }
@@ -144,6 +145,7 @@
       falsePositives,
       falseNegatives,
       enforceGravity,
+      reduceWellsAndTowers,
       onSuccess,
       onFailure,
       onEnd,
@@ -191,8 +193,6 @@
   function onGifProgressUpdate(e) {
     gifProgress = e.detail;
   }
-
-  $:console.log(gifProgress)
 </script>
 
 <main>
@@ -345,6 +345,7 @@
     bind:falsePositives
     bind:falseNegatives
     bind:enforceGravity
+    bind:reduceWellsAndTowers
     bind:numThreads
     bind:removeDuplicates
     bind:colors

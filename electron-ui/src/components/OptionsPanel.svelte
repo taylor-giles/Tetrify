@@ -14,6 +14,7 @@
     export let enforceGravity: boolean;
     export let numThreads: number;
     export let removeDuplicates: boolean;
+    export let reduceWellsAndTowers: boolean;
     export let colors: object;
     export let height: number;
     export let width: number;
@@ -151,6 +152,19 @@
                 <input
                     type="checkbox"
                     bind:checked={enforceGravity}
+                    class="checkbox-input"
+                    disabled={currentMode == AppContextMode.RUNNING}
+                />
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div class="option-label">Reduce Wells & Towers:</div>
+            </td>
+            <td>
+                <input
+                    type="checkbox"
+                    bind:checked={reduceWellsAndTowers}
                     class="checkbox-input"
                     disabled={currentMode == AppContextMode.RUNNING}
                 />

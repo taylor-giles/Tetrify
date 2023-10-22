@@ -187,6 +187,34 @@ def count_buried_false_negatives(board: np.ndarray):
                 count = 0
     return output
 
+def count_wells(board: np.ndarray):
+    # Determine the number of 3-high, 1-wide wells on the board
+    # This is a feature designed to limit excessive I-piece placements
+    output = 0
+    for x in range(board.shape[0]):
+        well_height = 0
+        for y in reversed(range(board.shape[1])):
+            if board[x,y][0] == CellValue.FALSE_NEGATIVE.value:
+                # Check the cell to the left and right. If neither is false positive, this cell is part of a well.
+                if (x-1 < 0 or board[x-1,y][0] != CellValue.FALSE_NEGATIVE.value) and (x+1 >= board.shape[0] or board[x+1,y][0] != CellValue.FALSE_NEGATIVE.value):
+                    well_height += 1
+        output += well_height // 3
+    return output
+
+def count_towers(board: np.ndarray):
+    # Determine the number of 3-high, 1-wide towers on the board
+    # This is a feature designed to limit excessive I-piece placements
+    output = 0
+    for x in range(board.shape[0]):
+        tower_height = 0
+        for y in reversed(range(board.shape[1])):
+            if is_filled(board[x,y][0]):
+                # Check the cell to the left and right. If both are false negatives, this cell is part of a tower.
+                if (x-1 < 0 or board[x-1,y][0] == CellValue.FALSE_NEGATIVE.value) and (x+1 >= board.shape[0] or board[x+1,y][0] == CellValue.FALSE_NEGATIVE.value):
+                    tower_height += 1
+        output += tower_height // 3
+    return output
+
 def count_ghosts(board: np.ndarray):
     return np.count_nonzero(board[:, :, 1])
 

@@ -18,7 +18,7 @@ export function stopEngine(){
   children.forEach((child) => child.kill())
 }
 
-export function runEngine(grid, falsePositives, falseNegatives, enforceGravity, onSuccess, onFailure, onEnd, numThreads=getNumCores()){
+export function runEngine(grid, falsePositives, falseNegatives, enforceGravity, reduceWellsAndTowers, onSuccess, onFailure, onEnd, numThreads=getNumCores()){
   //Add six rows to the top of the grid to allow for block spawning
   let new_grid = []
   for(let i = 0; i < NUM_ADDED_ROWS; i++){
@@ -84,7 +84,7 @@ export function runEngine(grid, falsePositives, falseNegatives, enforceGravity, 
     });
 
     //Send the data over stdin
-    childProcess.stdin.write(JSON.stringify({grid: grid, false_positives: falsePositives, false_negatives: falseNegatives, enforce_gravity: enforceGravity}));
+    childProcess.stdin.write(JSON.stringify({grid: grid, false_positives: falsePositives, false_negatives: falseNegatives, enforce_gravity: enforceGravity, reduce_Is: reduceWellsAndTowers}));
     childProcess.stdin.end();
   }
 }
