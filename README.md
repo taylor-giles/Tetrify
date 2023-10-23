@@ -9,7 +9,25 @@ Installation
 ------------
 This app is available on the web at [https://tetrify.taylorgiles.me](https://tetrify.taylorgiles.me). However, the simulation computation on the web version is highly limited due to low resource availability. 
 
-To install Tetrify and use it on your own hardware, 
+To install Tetrify and use it on your own hardware, install the desktop Electron app from the releases on [this repository](https://github.com/taylor-giles/Tetrify).
+
+Alternatively, you could clone [this repository](https://github.com/taylor-giles/Tetrify) and run it yourself:
+```bash
+git clone https://github.com/taylor-giles/Tetrify.git
+cd Tetrify
+npm install
+```
+
+To run in dev environment:
+```
+npm run dev
+```
+
+To build distributables:
+```
+npm run make
+```
+(built distributables will be available in the `out` directory).
 
 Usage Guide
 -----------
