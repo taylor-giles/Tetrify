@@ -4,13 +4,16 @@ module.exports = {
     extraResource: [
       "./engine"
     ],
-    platform: ["win32", "linux", "darwin"]
+    icon: './ui/public/favicon'
   },
   rebuildConfig: {},
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
-      config: {},
+      config: {
+        exe: 'Tetrify.exe',
+        name: 'Tetrify'
+      },
     },
     {
       name: '@electron-forge/maker-zip',

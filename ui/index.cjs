@@ -13,7 +13,8 @@ app.on("ready", () => {
   mainWindow.loadFile(path.join(__dirname, "public/index.html"));
   mainWindow.setMinimumSize(1300, 900);
   mainWindow.maximize();
-  
+  mainWindow.setBackgroundColor("white")
+
   //Opens the dev tools window automatically
   // mainWindow.webContents.openDevTools();
 });
