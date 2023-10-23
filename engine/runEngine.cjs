@@ -29,7 +29,7 @@ export function runEngine(grid, falsePositives, falseNegatives, enforceGravity, 
 
   let newChildren = []
   for(let childNum = 0; childNum < numThreads; childNum++){
-    const childProcess = spawn("python", ["../engine/tetrify_engine.py"]);
+    const childProcess = spawn("python", ["engine/tetrify_engine.py"]);
     newChildren.push(childProcess)
     children.push(childProcess)
     buffers[childProcess.pid] = ""

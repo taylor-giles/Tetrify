@@ -3,7 +3,14 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "main": "index.cjs",
+  "main": "ui/index.cjs",
+  "license": "MIT",
+  "author": {
+    "name": "Taylor Giles",
+    "email": "contact@taylorgiles.me"
+  },
+  "keywords": ["tetrify", "tetrimino", "tetriminoes", "tetris", "art"],
+  "description": "An app for building custom animations of falling Tetrominoes",
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w",

@@ -198,6 +198,10 @@ def count_wells(board: np.ndarray):
                 # Check the cell to the left and right. If neither is false positive, this cell is part of a well.
                 if (x-1 < 0 or board[x-1,y][0] != CellValue.FALSE_NEGATIVE.value) and (x+1 >= board.shape[0] or board[x+1,y][0] != CellValue.FALSE_NEGATIVE.value):
                     well_height += 1
+            else:
+                # If a non-false negative was found, then the well must have ended
+                output += well_height // 3
+                well_height = 0
         output += well_height // 3
     return output
 
@@ -212,6 +216,10 @@ def count_towers(board: np.ndarray):
                 # Check the cell to the left and right. If neither are filled, this cell is part of a tower.
                 if (x-1 < 0 or not is_filled(board[x-1,y][0])) and (x+1 >= board.shape[0] or not is_filled(board[x+1,y][0])):
                     tower_height += 1
+            else:
+            # If a non-filled cell was found, then the well must have ended
+                output += tower_height // 3
+                tower_height = 0
         output += tower_height // 3
     return output
 
