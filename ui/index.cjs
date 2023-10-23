@@ -7,11 +7,12 @@ app.on("ready", () => {
     webPreferences: {
       //Both of these must be set like this in order to import node modules (like child_process) in the render code
       nodeIntegration: true,
-      contextIsolation: false,
-      preload: "preload.cjs"
+      contextIsolation: false
     }
   })
   mainWindow.loadFile(path.join(__dirname, "public/index.html"));
+  mainWindow.setMinimumSize(1300, 900);
+  mainWindow.maximize();
   
   //Opens the dev tools window automatically
   // mainWindow.webContents.openDevTools();

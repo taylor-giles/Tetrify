@@ -1,8 +1,12 @@
 const { spawn } = window.require('node:child_process');
 const os = require('node:os');
+const path = require('path');
 
 const EOF = "<EOF>"
 const NUM_ADDED_ROWS = 6;
+
+//Determine location of engine dir
+const ENGINE_DIR = path.join(process.env.NODE_ENV ? '.' : process.resourcesPath, 'engine')
 
 export function getNumCores(){
   return os.cpus().length;
@@ -29,7 +33,7 @@ export function runEngine(grid, falsePositives, falseNegatives, enforceGravity, 
 
   let newChildren = []
   for(let childNum = 0; childNum < numThreads; childNum++){
-    const childProcess = spawn("python", ["engine/tetrify_engine.py"]);
+    const childProcess = spawn("python", [path.join(ENGINE_DIR, 'tetrify_engine.py')]);
     newChildren.push(childProcess)
     children.push(childProcess)
     buffers[childProcess.pid] = ""

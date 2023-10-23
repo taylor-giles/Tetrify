@@ -9,15 +9,30 @@
     "name": "Taylor Giles",
     "email": "contact@taylorgiles.me"
   },
-  "keywords": ["tetrify", "tetrimino", "tetriminoes", "tetris", "art"],
+  "keywords": [
+    "tetrify",
+    "tetromino",
+    "tetrominoes",
+    "tetris",
+    "art"
+  ],
   "description": "An app for building custom animations of falling Tetrominoes",
   "scripts": {
     "build": "rollup -c",
-    "dev": "rollup -c -w",
-    "start": "electron .",
-    "check": "svelte-check"
+    "dev": "cross-env NODE_ENV=dev rollup -c -w",
+    "app": "electron .",
+    "check": "svelte-check",
+    "start": "cross-env NODE_ENV=electron-forge electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
   },
   "devDependencies": {
+    "@electron-forge/cli": "^6.4.2",
+    "@electron-forge/maker-deb": "^6.4.2",
+    "@electron-forge/maker-rpm": "^6.4.2",
+    "@electron-forge/maker-squirrel": "^6.4.2",
+    "@electron-forge/maker-zip": "^6.4.2",
+    "@electron-forge/plugin-auto-unpack-natives": "^6.4.2",
     "@rollup/plugin-commonjs": "^24.0.0",
     "@rollup/plugin-node-resolve": "^15.0.0",
     "@rollup/plugin-terser": "^0.4.0",
@@ -26,6 +41,7 @@
     "@types/gif.js": "^0.2.2",
     "@types/node": "^20.2.5",
     "canvas": "^2.11.2",
+    "cross-env": "^7.0.3",
     "electron": "^24.4.0",
     "rollup": "^3.15.0",
     "rollup-plugin-css-only": "^4.3.0",
@@ -39,6 +55,7 @@
   },
   "dependencies": {
     "@types/watch": "^1.0.3",
+    "electron-squirrel-startup": "^1.0.0",
     "fs": "^0.0.1-security",
     "gif.js": "^0.2.0",
     "gif.js.optimized": "^1.0.1",
