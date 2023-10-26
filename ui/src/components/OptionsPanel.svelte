@@ -1,12 +1,12 @@
 <script lang="ts">
-    import { getNumCores } from "../../../engine/runEngine.cjs";
     import {
         AppContextMode,
         MAX_HEIGHT,
         MAX_WIDTH,
         MIN_HEIGHT,
-        MIN_WIDTH,
+        MIN_WIDTH
     } from "../App.svelte";
+    import { getNumCores } from "../../../engine/engineUtils";
 
     export let currentMode: AppContextMode;
     export let falsePositives: number;
@@ -67,7 +67,7 @@
     $: if (borderThickness > Math.min(cellHeight, cellWidth) / 2) {
         borderThickness = Math.min(cellHeight, cellWidth) / 2;
     }
-    $: if(animationSpeed > 100){
+    $: if (animationSpeed > 100) {
         animationSpeed = 100;
     }
 </script>

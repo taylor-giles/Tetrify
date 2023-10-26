@@ -7,6 +7,7 @@ import livereload from 'rollup-plugin-livereload';
 import css from 'rollup-plugin-css-only';
 import sveltePreprocess from 'svelte-preprocess';
 import typescript from '@rollup/plugin-typescript';
+import dynamicImportVars from '@rollup/plugin-dynamic-import-vars'
 
 const production = !process.env.ROLLUP_WATCH;
 
@@ -35,9 +36,8 @@ export default {
 	input: 'ui/src/main.ts',
 	output: {
 		sourcemap: true,
-		format: 'iife',
-		name: 'app',
-		file: 'ui/public/build/bundle.js'
+		format: 'es',
+		dir: 'ui/public/build'
 	},
 	plugins: [
 		svelte({

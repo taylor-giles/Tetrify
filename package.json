@@ -40,6 +40,7 @@
     "@tsconfig/svelte": "^3.0.0",
     "@types/gif.js": "^0.2.2",
     "@types/node": "^20.2.5",
+    "@types/ws": "^8.5.8",
     "canvas": "^2.11.2",
     "cross-env": "^7.0.3",
     "electron": "^24.4.0",
@@ -60,6 +61,7 @@
     "gif.js": "^0.2.0",
     "gif.js.optimized": "^1.0.1",
     "os": "^0.1.2",
-    "sirv-cli": "^2.0.0"
+    "sirv-cli": "^2.0.0",
+    "ws": "^8.14.2"
   }
 }

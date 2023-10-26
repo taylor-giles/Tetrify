@@ -15,12 +15,14 @@
 
 <script lang="ts">
   import ToggleGrid from "./components/ToggleGrid.svelte";
-  import { runEngine, stopEngine } from "../../engine/runEngine.cjs";
   import AnimationPlayer from "./components/AnimationPlayer.svelte";
   import OptionsPanel from "./components/OptionsPanel.svelte";
   import HelpText from "./components/HelpText.svelte";
   import StopConditionSelector from "./components/StopConditionSelector.svelte";
+  import { runEngine, stopEngine } from "../../engine/engineUtils";
 
+
+  //Variable to store current mode
   let currentMode: AppContextMode = AppContextMode.DRAWING;
 
   //Canvas & display options
@@ -167,7 +169,7 @@
 
     // Clear stop conditions
     useAutoStop = false;
-    stopCondition = {time: null, animations: null}
+    stopCondition = { time: null, animations: null };
 
     // Start the timer
     let timeStart = Date.now();
@@ -267,7 +269,7 @@
             />
           </td>
           <td>
-            <div> Automatic Stop </div>
+            <div>Automatic Stop</div>
           </td>
         </tr>
         {#if useAutoStop}

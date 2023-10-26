@@ -75,5 +75,6 @@
     margin: 0;
     height: var(--height);
     white-space: nowrap;
+    line-height: 1;
   }
 </style>

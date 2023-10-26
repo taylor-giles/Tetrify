@@ -70,9 +70,10 @@
 
 <style>
   .row {
-    padding: 0;
-    margin: 0;
+    padding: 0px;
+    margin: 0px;
     height: var(--height);
     white-space: nowrap;
+    line-height: 1;
   }
 </style>
