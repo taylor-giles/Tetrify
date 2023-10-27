@@ -1,14 +1,12 @@
-const { spawn } = window.require('node:child_process');
+const { spawn } = require('node:child_process');
 const os = require('node:os');
-const path = require('path');
+const path = require('node:path');
 
 const EOF = "<EOF>"
 const NUM_ADDED_ROWS = 6;
 
 //Determine location of engine dir
-const ENGINE_DIR = path.join(process.env.NODE_ENV ? '.' : process.resourcesPath, 'engine')
-
-
+const ENGINE_DIR = path.join(process.env.NODE_ENV ? '.' : process.resourcesPath ?? ".", 'engine')
 
 //An array containing child process objects
 let children = []
@@ -16,17 +14,16 @@ let children = []
 // A dictionary where the keys are PIDs and the values are strings containing the current message buffer for that child process
 let buffers = {}
 
-
 //These 3 functions assume that the engine is running on local hardware. The client should not use these directly - use the definitions in engineUtils instead.
-export function _getNumCores() {
+function _getNumCores() {
   return os.cpus().length;
 }
 
-export function _stopEngine() {
+function _stopEngine() {
   children.forEach((child) => child.kill())
 }
 
-export function _runEngine(grid, falsePositives, falseNegatives, enforceGravity, reduceWellsAndTowers, onSuccess, onEnd, numThreads = getNumCores()) {
+function _runEngine(grid, falsePositives, falseNegatives, enforceGravity, reduceWellsAndTowers, onSuccess, onEnd, numThreads = _getNumCores()) {
   //Add six rows to the top of the grid to allow for block spawning
   let new_grid = []
   for (let i = 0; i < NUM_ADDED_ROWS; i++) {
@@ -94,5 +91,9 @@ export function _runEngine(grid, falsePositives, falseNegatives, enforceGravity,
     //Send the data over stdin
     childProcess.stdin.write(JSON.stringify({ grid: grid, false_positives: falsePositives, false_negatives: falseNegatives, enforce_gravity: enforceGravity, reduce_Is: reduceWellsAndTowers }));
     childProcess.stdin.end();
+
+    return newChildren;
   }
 }
+
+module.exports = {_runEngine, _stopEngine, _getNumCores}

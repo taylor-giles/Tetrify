@@ -8,7 +8,7 @@ let webSocket: WebSocket;
  * Uses a websocket to run the engine on a remote server via RPC.
  * Returns a reference to the websocket object
  */
-export function runEngineRemote(
+function runEngineRemote(
     grid,
     falsePositives,
     falseNegatives,
@@ -66,37 +66,26 @@ export function runEngineRemote(
 /**
  * Close the websocket (it is up to the server to stop the engine)
  */
-export function stopEngineRemote() {
+function stopEngineRemote() {
     webSocket.close();
 }
 
 // Define runEngine, stopEngine, and getNumCores according to the context the app is running in.
 // If running in electron, then define engine functions to interface with engine directly. Otherwise, use remote definitions.
-const REMOTE_FUNCTIONS = { runEngine: runEngineRemote, stopEngine: stopEngineRemote, getNumCores: () => 1 }
-let chosenFunctions = REMOTE_FUNCTIONS
-if (IS_ELECTRON) {
-    import("./tetrifyEngine.cjs").then(
-        ({ _runEngine, _stopEngine, _getNumCores }) => {
-            console.log("Using local engine");
-            chosenFunctions = { runEngine: _runEngine, stopEngine: _stopEngine, getNumCores: _getNumCores };
-        }
-    )
-        .catch((error) => {
-            //On failure to import, default to remote functions
-            console.error(`Error importing engine. Defaulting to RPC engine.`, error);
-            chosenFunctions = REMOTE_FUNCTIONS;
-        });
-}
+// NOTE: The global.ENGINE_FUNCTIONS are references to the functions in tetrifyEngine. 
+// They are loaded in the Electron preload script and added to the global reference scope for access here.
+const REMOTE_FUNCTIONS = { _runEngine: runEngineRemote, _stopEngine: stopEngineRemote, _getNumCores: () => 1 }
+const CHOSEN_FUNCTIONS = IS_ELECTRON && global.ENGINE_FUNCTIONS ? global.ENGINE_FUNCTIONS : REMOTE_FUNCTIONS
 
 export function runEngine(grid,
-    falsePositives,
-    falseNegatives,
-    enforceGravity,
-    reduceWellsAndTowers,
-    onSuccess,
-    onEnd,
-    numThreads) {
-    return chosenFunctions.runEngine(grid,
+    falsePositives: number,
+    falseNegatives: number,
+    enforceGravity: boolean,
+    reduceWellsAndTowers: boolean,
+    onSuccess: (frames: string[][]) => any,
+    onEnd: () => any,
+    numThreads: number) {
+    return CHOSEN_FUNCTIONS._runEngine(grid,
         falsePositives,
         falseNegatives,
         enforceGravity,
@@ -108,10 +97,10 @@ export function runEngine(grid,
 }
 
 export function stopEngine() {
-    return chosenFunctions.stopEngine();
+    return CHOSEN_FUNCTIONS._stopEngine();
 }
 
 export function getNumCores() {
-    return chosenFunctions.getNumCores();
+    return CHOSEN_FUNCTIONS._getNumCores();
 }
 

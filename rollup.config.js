@@ -7,7 +7,7 @@ import livereload from 'rollup-plugin-livereload';
 import css from 'rollup-plugin-css-only';
 import sveltePreprocess from 'svelte-preprocess';
 import typescript from '@rollup/plugin-typescript';
-import dynamicImportVars from '@rollup/plugin-dynamic-import-vars'
+
 
 const production = !process.env.ROLLUP_WATCH;
 

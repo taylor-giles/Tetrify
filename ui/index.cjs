@@ -5,6 +5,8 @@ const path = require("path");
 app.on("ready", () => {
   const mainWindow = new BrowserWindow({
     webPreferences: {
+      preload: path.join(__dirname, 'electron_preload.cjs'),
+
       //Both of these must be set like this in order to import node modules (like child_process) in the render code
       nodeIntegration: true,
       contextIsolation: false
