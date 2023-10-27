@@ -19,7 +19,7 @@ function runEngineRemote(
     numThreads
 ) {
     //Use websocket to start engine
-    webSocket = new WebSocket("ws://localhost:6000");
+    webSocket = new WebSocket("ws://tetrify.taylorgiles.me/wss");
 
     webSocket.addEventListener("open", (event) => {
         //Build config object
