@@ -1,5 +1,5 @@
 //NOTE - This MUST be a CommonJS file to be able to use `require` for electron (hence the .cjs extension)
-const { app, BrowserWindow } = require("electron");
+const { app, BrowserWindow, shell } = require("electron");
 const path = require("path");
 
 app.on("ready", () => {
@@ -15,8 +15,14 @@ app.on("ready", () => {
   mainWindow.loadFile(path.join(__dirname, "public/index.html"));
   mainWindow.setMinimumSize(1300, 900);
   mainWindow.maximize();
-  mainWindow.setBackgroundColor("white")
+  mainWindow.setBackgroundColor("white");
 
-  //Opens the dev tools window automatically
+  //Move any navigation to the default browser
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    event.preventDefault();
+    shell.openExternal(url);
+  });
+
+  //Open the dev tools window automatically
   // mainWindow.webContents.openDevTools();
 });
