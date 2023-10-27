@@ -21,7 +21,6 @@
   import StopConditionSelector from "./components/StopConditionSelector.svelte";
   import { runEngine, stopEngine } from "../../engine/engineUtils";
 
-
   //Variable to store current mode
   let currentMode: AppContextMode = AppContextMode.DRAWING;
 
@@ -219,78 +218,94 @@
   }
 </script>
 
-<main>
-  <!-- Art -->
-  <div id="art-container">
-    {#if currentMode == AppContextMode.DRAWING}
-      <div>Draw Here:</div>
-    {/if}
+"
 
-    <ToggleGrid
-      width={width <= MAX_WIDTH ? width : MAX_WIDTH}
-      height={height <= MAX_HEIGHT ? height : MAX_HEIGHT}
-      bind:grid
-      disabled={currentMode != AppContextMode.DRAWING}
-      bind:this={canvas}
-    />
-    <div id="result-text-panel">
-      {#if currentMode == AppContextMode.RUNNING}
-        <div>
-          Simulating. Time elapsed: {timeTakenStr}
-        </div>
-        <div>
-          Animations found: {animations.length}
-        </div>
-      {:else if currentMode == AppContextMode.STOPPED}
-        <div><b>Simulation complete.</b> Time elapsed: {timeTakenStr}</div>
-        <div>
-          Animations found: {animations.length}
-        </div>
-      {/if}
-    </div>
-    <div id="button-panel">
+<div id="main">
+  <div id="left-panel">
+    <!-- Art -->
+    <div id="art-container">
       {#if currentMode == AppContextMode.DRAWING}
-        <button
-          on:click={() => {
-            canvas.invertGrid();
-          }}
-        >
-          Invert
-        </button>
-        <button on:click={restart}> Clear </button>
-        <button on:click={runSimulation}> Animate! </button>
-      {:else if currentMode == AppContextMode.RUNNING}
-        <tr>
-          <td>
-            <input
-              type="checkbox"
-              bind:checked={useAutoStop}
-              class="checkbox-input"
-            />
-          </td>
-          <td>
-            <div>Automatic Stop</div>
-          </td>
-        </tr>
-        {#if useAutoStop}
-          <StopConditionSelector
-            on:apply={(e) => {
-              stopCondition = e.detail;
-            }}
-          />
-        {/if}
-        <button on:click={stopEngine}> Stop Now </button>
-      {:else if currentMode == AppContextMode.STOPPED}
-        <button on:click={runSimulation}> Re-Animate</button>
-        <button
-          on:click={() => {
-            clearAnimations();
-            currentMode = AppContextMode.DRAWING;
-          }}
-        >
-          Edit Drawing
-        </button>
+        <div>Draw Here:</div>
       {/if}
+
+      <ToggleGrid
+        width={width <= MAX_WIDTH ? width : MAX_WIDTH}
+        height={height <= MAX_HEIGHT ? height : MAX_HEIGHT}
+        bind:grid
+        disabled={currentMode != AppContextMode.DRAWING}
+        bind:this={canvas}
+      />
+      <div id="result-text-panel">
+        {#if currentMode == AppContextMode.RUNNING}
+          <div>
+            Simulating. Time elapsed: {timeTakenStr}
+          </div>
+          <div>
+            Animations found: {animations.length}
+          </div>
+        {:else if currentMode == AppContextMode.STOPPED}
+          <div><b>Simulation complete.</b> Time elapsed: {timeTakenStr}</div>
+          <div>
+            Animations found: {animations.length}
+          </div>
+        {/if}
+      </div>
+      <div id="button-panel">
+        {#if currentMode == AppContextMode.DRAWING}
+          <button
+            on:click={() => {
+              canvas.invertGrid();
+            }}
+          >
+            Invert
+          </button>
+          <button on:click={restart}> Clear </button>
+          <button on:click={runSimulation}> Animate! </button>
+        {:else if currentMode == AppContextMode.RUNNING}
+          <tr>
+            <td>
+              <input
+                type="checkbox"
+                bind:checked={useAutoStop}
+                class="checkbox-input"
+              />
+            </td>
+            <td>
+              <div>Automatic Stop</div>
+            </td>
+          </tr>
+          {#if useAutoStop}
+            <StopConditionSelector
+              on:apply={(e) => {
+                stopCondition = e.detail;
+              }}
+            />
+          {/if}
+          <button on:click={stopEngine}> Stop Now </button>
+        {:else if currentMode == AppContextMode.STOPPED}
+          <button on:click={runSimulation}> Re-Animate</button>
+          <button
+            on:click={() => {
+              clearAnimations();
+              currentMode = AppContextMode.DRAWING;
+            }}
+          >
+            Edit Drawing
+          </button>
+        {/if}
+      </div>
+    </div>
+    <div id="copyright-panel">
+      <a class="footer-link" href="https://taylorgiles.me"> © Taylor Giles </a>
+      <a class="footer-link" href="https://github.com/taylor-giles/Tetrify">
+        View Source
+      </a>
+      <a
+        class="footer-link"
+        href="https://github.com/taylor-giles/Tetrify/issues"
+      >
+        Report an Issue
+      </a>
     </div>
   </div>
 
@@ -401,10 +416,11 @@
     bind:cellHeight
     bind:animationSpeed
   />
-</main>
+</div>
 
 <style>
-  main {
+  #main {
+    flex: 1;
     height: 100%;
     width: 100%;
     display: flex;
@@ -422,9 +438,16 @@
   #button-panel {
     margin-top: 5px;
   }
+  #left-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    max-width: calc(100% - 400px);
+  }
   #art-container {
     height: max-content;
-    max-width: calc(100% - 400px);
+
+    width: 100%;
     padding: 20px;
     overflow-y: auto;
   }
@@ -454,5 +477,14 @@
     background-color: transparent;
     border: none;
     font-family: "Courier New", Courier, monospace;
+  }
+  #copyright-panel {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+  .footer-link {
+    margin-right: 20px;
+    font-size: 9pt;
   }
 </style>
