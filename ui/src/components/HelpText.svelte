@@ -1,3 +1,7 @@
+<script>
+    import { IS_ELECTRON } from "../../../engine/engineUtils";
+</script>
+
 <main>
     <h2>Welcome to Tetrify!</h2>
     <p>
@@ -22,6 +26,21 @@
         Keep in mind that some drawings cannot be Tetrified without making
         changes to the simulation. For more details, see "Simulation Options".
     </p>
+
+    {#if !IS_ELECTRON}
+        <p>
+            <b>
+                The simulations that can be run with the web app are limited to
+                only one thread and a runtime of at most 5 minutes.
+            </b>
+            <br /> As many simulations will not be able to reach completion
+            given these limitations, it is recommended to
+            <a href="https://github.com/taylor-giles/Tetrify#installation">
+                install the Electron app
+            </a>, which leverages local hardware and allows for unlimited
+            runtime.
+        </p>
+    {/if}
 
     <h3>Drawing</h3>
     <p>
@@ -63,6 +82,8 @@
         through some compromises. Use this guide to better understand why some
         images are not "Tetrify-able" and how to use these options to work
         around those restrictions:
+    </p>
+    <ul>
         <li>
             <b>False Positives</b> - The maximum number of extra cells that the animation
             is "allowed" to fill with blocks. For example, an image consisting of
@@ -115,14 +136,15 @@
             that have already been seen in previously-generated animations will not
             be saved or shown.
         </li>
-    </p>
+    </ul>
     <h3>TIPS</h3>
-    <p>
-        Here are some tips to help you get the most out of Tetrify:
+    <p>Here are some tips to help you get the most out of Tetrify:</p>
+    <ul>
         <li>
             When possible, try to make sure that the number of cells in each
             part of your drawing is a multiple of four. This ensures that the
-            simulation does not fail immediately without false positives/negatives.
+            simulation does not fail immediately without false
+            positives/negatives.
         </li>
         <li>
             If your drawing does not have any "floating" parts, put it at the
@@ -133,7 +155,7 @@
             Keep the canvas as small as possible for your drawing. Increasing
             the canvas size increases runtime.
         </li>
-    </p>
+    </ul>
 </main>
 
 <style>
@@ -149,5 +171,9 @@
     }
     li {
         margin-top: 8px;
+    }
+    ul {
+        list-style: inside;
+        padding-left: 0;
     }
 </style>
