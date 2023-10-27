@@ -5,6 +5,7 @@ import { _runEngine, _stopEngine } from '../engine/tetrifyEngine.cjs'
 //Define a WebSocket wrapper type that includes a reference to child processes
 type TetrifyWebSocket = WebSocket & { children: ChildProcess[] | undefined }
 
+const TIMEOUT_MILLIS = 300000;
 const PORT = parseInt(process.env.PORT ?? "6000") ?? 6000;
 const wsServer = new WebSocketServer({ port: PORT });
 const properties = ['grid', 'false_positives', 'false_negatives', 'enforce_gravity', 'reduce_Is']
@@ -34,6 +35,11 @@ wsServer.on('connection', (ws: TetrifyWebSocket) => {
                 () => { ws.close() },       //When simulation ends, close the websocket
                 1       //Use only one thread
             );
+
+            //After timeout, cut off the session by closing websocket
+            setTimeout(() => {
+                ws.close()
+            }, TIMEOUT_MILLIS);
         } catch (error) {
             console.error("Error starting engine:\n\t", error.message);
             ws.send(Buffer.from(JSON.stringify({ log: error })));
