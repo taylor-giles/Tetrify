@@ -24,7 +24,8 @@
     "check": "svelte-check",
     "start": "cross-env NODE_ENV=electron-forge electron-forge start",
     "package": "electron-forge package",
-    "make": "electron-forge make"
+    "make": "electron-forge make",
+    "serve": "npx ts-node-esm server/server.ts"
   },
   "devDependencies": {
     "@electron-forge/cli": "^6.4.2",

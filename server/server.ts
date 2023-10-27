@@ -35,7 +35,7 @@ wsServer.on('connection', (ws: TetrifyWebSocket) => {
                 1       //Use only one thread
             );
         } catch (error) {
-            console.error("Error starting engine: ", error);
+            console.error("Error starting engine:\n\t", error.message);
             ws.send(Buffer.from(JSON.stringify({ log: error })));
         }
 

@@ -34,7 +34,7 @@ function _runEngine(grid, falsePositives, falseNegatives, enforceGravity, reduce
 
   let newChildren = []
   for (let childNum = 0; childNum < numThreads; childNum++) {
-    const childProcess = spawn("python", [path.join(ENGINE_DIR, 'tetrify_driver.py')]);
+    const childProcess = spawn("python3", [path.join(ENGINE_DIR, 'tetrify_driver.py')]);
     newChildren.push(childProcess)
     children.push(childProcess)
     buffers[childProcess.pid] = ""
