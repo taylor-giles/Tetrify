@@ -3,13 +3,31 @@
 Welcome to Tetrify!
 -------------------
 
-This app provides an easy and intuitive interface for converting custom drawings into animations of falling Tetriminoes. It uses an optimized semi-random approach for generating animations, by simulating many possible sequences of block positions to find a matching board state. Read this guide for instructions on using this app and descriptions of the options and processes involved.
+This app provides an easy and intuitive interface for converting custom drawings into animations of falling Tetrominoes. It uses an optimized semi-random approach for generating animations, by simulating many possible sequences of block positions to find a matching board state. Read this guide for instructions on using this app and descriptions of the options and processes involved.
 
 Installation
 ------------
 This app is available on the web at [https://tetrify.taylorgiles.me](https://tetrify.taylorgiles.me). However, the simulation computation on the web version is highly limited due to low resource availability. 
 
-To install Tetrify and use it on your own hardware, 
+To install Tetrify and use it on your own hardware, install the desktop Electron app from the releases on [this repository](https://github.com/taylor-giles/Tetrify).
+
+Alternatively, you could clone [this repository](https://github.com/taylor-giles/Tetrify) and run it yourself:
+```bash
+git clone https://github.com/taylor-giles/Tetrify.git
+cd Tetrify
+npm install
+```
+
+To run in dev environment:
+```
+npm run dev
+```
+
+To build distributables:
+```
+npm run make
+```
+(built distributables will be available in the `out` directory).
 
 Usage Guide
 -----------
@@ -35,8 +53,8 @@ It is important to note that for some drawings, it may take a very long time to 
 
 Some images are not "Tetrify-able" using the default settings, for various reasons. The Simulation Options on the right are designed to offer greater flexibility, allowing the simulation to "bend the rules" in certain ways to make it possible to Tetrify a wider range of images, through some compromises. Use this guide to better understand why some images are not "Tetrify-able" and how to use these options to work around those restrictions:
 
-*   **False Positives** - The maximum number of extra cells that the animation is "allowed" to fill with blocks. For example, an image consisting of exactly three cells in a line would not be "Tetrify-able", because there is no Tetrimino that consists of only three cells. However, allowing at least one "false positive" would mean that an extra background cell could be filled, and an animation could be generated. In general, increasing this value will increase the likelihood that an animation will be found, while sacrificing image integrity.
-*   **False Negatives** - The maximum number of image cells that the animation is "allowed" to omit. For example, an image consisting of exactly five cells in a line would not be "Tetrify-able", because there is no way to fill exactly five cells with Tetriminoes. However, allowing at least one "false negative" would mean that the extra cell could be left as background, and an animation could be generated. In general, increasing this value will increase the likelihood that an animation will be found, while sacrificing image integrity.
+*   **False Positives** - The maximum number of extra cells that the animation is "allowed" to fill with blocks. For example, an image consisting of exactly three cells in a line would not be "Tetrify-able", because there is no Tetromino that consists of only three cells. However, allowing at least one "false positive" would mean that an extra background cell could be filled, and an animation could be generated. In general, increasing this value will increase the likelihood that an animation will be found, while sacrificing image integrity.
+*   **False Negatives** - The maximum number of image cells that the animation is "allowed" to omit. For example, an image consisting of exactly five cells in a line would not be "Tetrify-able", because there is no way to fill exactly five cells with Tetrominoes. However, allowing at least one "false negative" would mean that the extra cell could be left as background, and an animation could be generated. In general, increasing this value will increase the likelihood that an animation will be found, while sacrificing image integrity.
 *   **Enforce Gravity** - If this option is enabled, then all blocks in the simulation must fall until landing on the bottom of the canvas or another block. However, by disabling this option, it is possible to create animations in which blocks are allowed to remain floating, at the cost of increased runtime. Disable this option if your drawing includes floating blocks.
 *   **Reduce Wells & Towers** - In animations made from large drawings, it is common to see many I-blocks stacked on top of each other. Enabling this option will instruct the simulation to avoid making any wells or towers, which subsequently reduces the number of excess I-blocks used. However, the addition of these features can increase runtime of large or complicated drawings. Enable this if you notice excessive I-blocks in your animations.
 *   **Number of Threads** - Since this app's simulations involve randomized elements, running multiple simulations at the same time can result in finding multiple different animations more quickly. This option allows you to specify how many distinct threads should be used to run simulations. Note that this value cannot exceed the number of available CPU threads, and that increasing this value can result in high CPU usage.
