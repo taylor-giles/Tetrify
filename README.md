@@ -27,7 +27,11 @@ To build distributables:
 ```
 npm run make
 ```
-(built distributables will be available in the `out` directory).
+Or, to build for another plaform:
+```
+npm run make -- --platform=[PLATFORM]
+```
+(Built distributables will be available in the `out` directory.)
 
 Usage Guide
 -----------
