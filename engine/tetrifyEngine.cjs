@@ -24,6 +24,7 @@ function _stopEngine() {
 }
 
 function _runEngine(grid, falsePositives, falseNegatives, enforceGravity, reduceWellsAndTowers, onSuccess, onEnd, numThreads = _getNumCores()) {
+  console.log(numThreads)
   //Add six rows to the top of the grid to allow for block spawning
   let new_grid = []
   for (let i = 0; i < NUM_ADDED_ROWS; i++) {
@@ -35,6 +36,7 @@ function _runEngine(grid, falsePositives, falseNegatives, enforceGravity, reduce
   let newChildren = []
   for (let childNum = 0; childNum < numThreads; childNum++) {
     const childProcess = spawn("python3", [path.join(ENGINE_DIR, 'tetrify_driver.py')]);
+    console.log(childProcess)
     newChildren.push(childProcess)
     children.push(childProcess)
     buffers[childProcess.pid] = ""
@@ -91,9 +93,8 @@ function _runEngine(grid, falsePositives, falseNegatives, enforceGravity, reduce
     //Send the data over stdin
     childProcess.stdin.write(JSON.stringify({ grid: grid, false_positives: falsePositives, false_negatives: falseNegatives, enforce_gravity: enforceGravity, reduce_Is: reduceWellsAndTowers }));
     childProcess.stdin.end();
-
-    return newChildren;
   }
+  return newChildren;
 }
 
 module.exports = {_runEngine, _stopEngine, _getNumCores}
