@@ -1,4 +1,4 @@
-import { WebSocketServer } from 'ws';
+import { WebSocketServer, WebSocket } from 'ws';
 import { ChildProcess } from 'child_process';
 import { _runEngine, _stopEngine } from '../engine/tetrifyEngine.cjs'
 
@@ -6,6 +6,7 @@ import { _runEngine, _stopEngine } from '../engine/tetrifyEngine.cjs'
 type TetrifyWebSocket = WebSocket & { children: ChildProcess[] | undefined }
 
 const TIMEOUT_MILLIS = 300000;
+const PING_INTERVAL = 20000;
 const PORT = parseInt(process.env.PORT ?? "6000") ?? 6000;
 const wsServer = new WebSocketServer({ port: PORT });
 const properties = ['grid', 'false_positives', 'false_negatives', 'enforce_gravity', 'reduce_Is']
@@ -40,11 +41,19 @@ wsServer.on('connection', (ws: TetrifyWebSocket) => {
             setTimeout(() => {
                 ws.close()
             }, TIMEOUT_MILLIS);
+
+            //Setup heartbeat
+            ws.on('pong', () => {
+                setInterval(() => {
+                    ws.ping();
+                }, PING_INTERVAL);
+            });
+            ws.ping();
+            
         } catch (error) {
             console.error("Error starting engine:\n\t", error.message);
             ws.send(Buffer.from(JSON.stringify({ log: error })));
         }
-
     }
 
     //Kill this session's child processes when its web socket is closed
