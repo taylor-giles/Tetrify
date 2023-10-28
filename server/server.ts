@@ -32,14 +32,18 @@ wsServer.on('connection', (ws: TetrifyWebSocket) => {
                 data["false_negatives"],
                 data["enforce_gravity"],
                 data["reduce_Is"],
-                (frames) => { ws.send(JSON.stringify({ frames: frames })) },    //When an animation is found, send the frames
-                () => { ws.close() },       //When simulation ends, close the websocket
+                (frames) => { ws.send(JSON.stringify({ frames: frames })); },    //When an animation is found, send the frames
+                () => { ws.close(); },       //When simulation ends, close the websocket
                 1       //Use only one thread
             );
 
+            let pids = ws.children.map((child) => child.pid)
+            console.log("Children:", JSON.stringify(pids));
+            ws.send(JSON.stringify({log: pids}))
+
             //After timeout, cut off the session by closing websocket
             setTimeout(() => {
-                ws.close()
+                ws.close();
             }, TIMEOUT_MILLIS);
 
             //Setup heartbeat

@@ -24,7 +24,6 @@ function _stopEngine() {
 }
 
 function _runEngine(grid, falsePositives, falseNegatives, enforceGravity, reduceWellsAndTowers, onSuccess, onEnd, numThreads = _getNumCores()) {
-  console.log(numThreads)
   //Add six rows to the top of the grid to allow for block spawning
   let new_grid = []
   for (let i = 0; i < NUM_ADDED_ROWS; i++) {
@@ -36,7 +35,6 @@ function _runEngine(grid, falsePositives, falseNegatives, enforceGravity, reduce
   let newChildren = []
   for (let childNum = 0; childNum < numThreads; childNum++) {
     const childProcess = spawn("python3", [path.join(ENGINE_DIR, 'tetrify_driver.py')]);
-    console.log(childProcess)
     newChildren.push(childProcess)
     children.push(childProcess)
     buffers[childProcess.pid] = ""
@@ -50,7 +48,7 @@ function _runEngine(grid, falsePositives, falseNegatives, enforceGravity, reduce
         msg = buffers[childProcess.pid].replace(EOF, "")
         buffers[childProcess.pid] = "" //Clear buffer
         try {
-          let data = JSON.parse(msg)
+          let data = JSON.parse(msg);
 
           //Log messages
           if ("log" in data) {
@@ -59,11 +57,11 @@ function _runEngine(grid, falsePositives, falseNegatives, enforceGravity, reduce
 
           //Frames (animation finding was successful)
           if ("frames" in data) {
-            // console.log(`[${childProcess.pid}] Received animation frames: ${data.frames}`)
-            onSuccess(data.frames)
+            console.log(`[${childProcess.pid}] Animation found`);
+            onSuccess(data.frames);
           }
         } catch (e) {
-          console.error(e)
+          console.error(e);
           console.log(`[${childProcess.pid}] ${msg}`);
         }
       }
@@ -81,11 +79,12 @@ function _runEngine(grid, falsePositives, falseNegatives, enforceGravity, reduce
       }
 
       //Remove this child from the list of children and buffer dictionary
-      children.splice(children.indexOf(childProcess), 1)
-      delete buffers[childProcess.pid]
+      children.splice(children.indexOf(childProcess), 1);
+      newChildren.splice(newChildren.indexOf(childProcess), 1);
+      delete buffers[childProcess.pid];
 
-      //Trigger end event if no more children are running
-      if (children.length <= 0) {
+      //Trigger end event if no more children FROM THIS SESSION are running
+      if (newChildren.length <= 0) {
         onEnd();
       }
     });
