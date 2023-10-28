@@ -3,7 +3,7 @@
 Welcome to Tetrify!
 -------------------
 
-This app provides an easy and intuitive interface for converting custom drawings into animations of falling Tetrominoes. It uses an optimized semi-random approach for generating animations, by simulating many possible sequences of block positions to find a matching board state. Read this guide for instructions on using this app and descriptions of the options and processes involved.
+This app provides an easy and intuitive interface for converting custom drawings into animations of falling Tetrominoes. It uses an optimized semi-random approach for generating animations, by simulating many possible sequences of block positions to find a matching board state. Read the following guide for instructions on using this app and descriptions of the options and processes involved.
 
 Installation
 ------------
@@ -35,7 +35,7 @@ Usage Guide
 
 To use this app as-is, simply click and drag in the canvas on the left to draw the image you would like to Tetrify, then press "Animate!". The app will run simulations to find animations that match your drawing. Animations are shown in the preview window as they are generated, so you can stop the simulation whenever you see one you like. You can then view the animations and the images they produce, and save what you like.
 
-Keep in mind that some drawings cannot be Tetrified without making changes to the simulation. For more details, see "Simulation Options".
+Keep in mind that not all images can be Tetrified exactly, but close approximations can be made. For more details, see "Simulation Options".
 
 ### Drawing
 
@@ -51,7 +51,7 @@ It is important to note that for some drawings, it may take a very long time to 
 
 ### Simulation Options
 
-Some images are not "Tetrify-able" using the default settings, for various reasons. The Simulation Options on the right are designed to offer greater flexibility, allowing the simulation to "bend the rules" in certain ways to make it possible to Tetrify a wider range of images, through some compromises. Use this guide to better understand why some images are not "Tetrify-able" and how to use these options to work around those restrictions:
+Some images are not "Tetrify-able" using the default settings, for various reasons (described below). The Simulation Options on the right are designed to offer greater flexibility, allowing the simulation to "bend the rules" in certain ways to make it possible to Tetrify a wider range of images, through some compromises. Use the following guide to better understand why some images are not "Tetrify-able" and how to use these options to work around those restrictions:
 
 *   **False Positives** - The maximum number of extra cells that the animation is "allowed" to fill with blocks. For example, an image consisting of exactly three cells in a line would not be "Tetrify-able", because there is no Tetromino that consists of only three cells. However, allowing at least one "false positive" would mean that an extra background cell could be filled, and an animation could be generated. In general, increasing this value will increase the likelihood that an animation will be found, while sacrificing image integrity.
 *   **False Negatives** - The maximum number of image cells that the animation is "allowed" to omit. For example, an image consisting of exactly five cells in a line would not be "Tetrify-able", because there is no way to fill exactly five cells with Tetrominoes. However, allowing at least one "false negative" would mean that the extra cell could be left as background, and an animation could be generated. In general, increasing this value will increase the likelihood that an animation will be found, while sacrificing image integrity.

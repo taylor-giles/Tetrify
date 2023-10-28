@@ -9,8 +9,8 @@
         drawings into animations of falling Tetriminoes. It uses an optimized
         semi-random approach for generating animations, by simulating many
         possible sequences of block positions to find a matching board state.
-        Read this guide for instructions on using this app and descriptions of
-        the options and processes involved.
+        Read the following guide for instructions on using this app and
+        descriptions of the options and processes involved.
     </p>
 
     <h3>QUICK START</h3>
@@ -23,22 +23,25 @@
         the animations and the images they produce, and save what you like.
     </p>
     <p>
-        Keep in mind that some drawings cannot be Tetrified without making
-        changes to the simulation. For more details, see "Simulation Options".
+        Keep in mind that not all images can be Tetrified exactly, but close
+        approximations can be made. For more details, see "Simulation Options".
     </p>
 
     {#if !IS_ELECTRON}
         <p>
             <b>
-                The simulations that can be run with the web app are limited to
-                only one thread and a runtime of at most 5 minutes.
+                ⚠️ All simulations run from the web app are limited to one
+                thread and a runtime of at most 5 minutes.
             </b>
             <br /> As many simulations will not be able to reach completion
             given these limitations, it is recommended to
-            <a href="https://github.com/taylor-giles/Tetrify#installation">
-                install the Electron app
-            </a>, which leverages local hardware and allows for unlimited
-            runtime.
+            <a
+                href="https://github.com/taylor-giles/Tetrify#installation"
+                target="_blank"
+                rel="noreferrer noopener"
+            >
+                install the Electron app</a
+            >, which leverages local hardware and allows for unlimited runtime.
         </p>
     {/if}
 
@@ -79,9 +82,9 @@
         various reasons. The Simulation Options on the right are designed to
         offer greater flexibility, allowing the simulation to "bend the rules"
         in certain ways to make it possible to Tetrify a wider range of images,
-        through some compromises. Use this guide to better understand why some
-        images are not "Tetrify-able" and how to use these options to work
-        around those restrictions:
+        through some compromises. Use the following guide to better understand
+        why some images are not "Tetrify-able" and how to use these options to
+        work around those restrictions:
     </p>
     <ul>
         <li>

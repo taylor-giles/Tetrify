@@ -19,7 +19,7 @@
   import OptionsPanel from "./components/OptionsPanel.svelte";
   import HelpText from "./components/HelpText.svelte";
   import StopConditionSelector from "./components/StopConditionSelector.svelte";
-  import { runEngine, stopEngine } from "../../engine/engineUtils";
+  import { IS_ELECTRON, runEngine, stopEngine } from "../../engine/engineUtils";
 
   //Variable to store current mode
   let currentMode: AppContextMode = AppContextMode.DRAWING;
@@ -260,6 +260,11 @@
           <button on:click={restart}> Clear </button>
           <button on:click={runSimulation}> Animate! </button>
         {:else if currentMode == AppContextMode.RUNNING}
+          {#if !IS_ELECTRON}
+            <div>
+              <b>⚠️ Simulations on web app are limited to 5 minutes.</b>
+            </div>
+          {/if}
           <tr>
             <td>
               <input
@@ -269,7 +274,7 @@
               />
             </td>
             <td>
-              <div>Automatic Stop</div>
+              <div style="margin-left: 3px;">Automatic Stop</div>
             </td>
           </tr>
           {#if useAutoStop}
@@ -294,13 +299,27 @@
       </div>
     </div>
     <div id="copyright-panel">
-      <a class="footer-link" href="https://taylorgiles.me"> © Taylor Giles </a>
-      <a class="footer-link" href="https://github.com/taylor-giles/Tetrify">
+      <a
+        class="footer-link"
+        href="https://taylorgiles.me"
+        target="_blank"
+        rel="noreferrer noopener"
+      >
+        © Taylor Giles
+      </a>
+      <a
+        class="footer-link"
+        href="https://github.com/taylor-giles/Tetrify"
+        target="_blank"
+        rel="noreferrer noopener"
+      >
         View Source
       </a>
       <a
         class="footer-link"
         href="https://github.com/taylor-giles/Tetrify/issues"
+        target="_blank"
+        rel="noreferrer noopener"
       >
         Report an Issue
       </a>
@@ -368,7 +387,7 @@
             />
           </td>
           <td>
-            <div>Show Only Final Board State</div>
+            <div style="margin-left: 3px;">Show Only Final Board State</div>
           </td>
         </tr>
 
