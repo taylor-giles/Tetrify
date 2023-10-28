@@ -35,10 +35,10 @@ npm run make -- --platform=[PLATFORM]
 
 Developing
 ----------
-* Run the Electron app with `npm run dev`.
+* Build & run the Electron app with `npm run dev`.
 * Run the server with `npm run serve`.
 * Build UI from source with `npm run build` (output goes to `ui/public`)
-* Build distributables with `npm run make -- --plaform=[PLATFORM]` (output goes to `out`
+* Build distributables with `npm run make -- --plaform=[PLATFORM]` (output goes to `out`)
 
 Usage Guide
 -----------
