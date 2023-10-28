@@ -218,8 +218,6 @@
   }
 </script>
 
-"
-
 <div id="main">
   <div id="left-panel">
     <!-- Art -->
