@@ -8,6 +8,8 @@
   import ColorGrid from "./ColorGrid.svelte";
   const dispatch = createEventDispatcher();
 
+  const MILLIS_TO_HANG = 1000;
+
   let colorGrid = [];
   export let width: number;
   export let height: number;
@@ -23,6 +25,9 @@
   export let frameDelay: number;
   export let frameIndex = 0;
 
+  export let hangAtEnd: boolean;
+  let displayFrames = [];
+
   let animationInterval: any;
   let mainView: any; //Reference to ColorGrid (gets bound later)
 
@@ -34,8 +39,26 @@
 
   //Start from frame 0 (reset) whenever the animation itself changes
   $: {
-    frames;
+    displayFrames = frames ? [...frames] : [];
     reset();
+  }
+
+  //Handle toggling of hanging on last frame
+  $: handleHangAtEnd(hangAtEnd);
+  function handleHangAtEnd(doHang: boolean){
+    displayFrames = frames ? [...frames] : [];
+    if (doHang && frames) {
+      let lastFrame = frames[frames.length - 1];
+      let numTimesToRepeat = parseInt(`${MILLIS_TO_HANG / frameDelay}`)
+      for (let i = 0; i < numTimesToRepeat; i++) {
+        displayFrames.push(lastFrame);
+      }
+    }
+
+    //Go back to beginning if hangAtEnd was toggled during the hang period
+    if(frames && frameIndex > frames.length){
+      frameIndex = 0;
+    }
   }
 
   function computeColorGrid(frame) {
@@ -69,17 +92,23 @@
   export function reset() {
     pause();
     frameIndex = 0;
+    handleHangAtEnd(hangAtEnd);
     resume();
   }
 
   export function resume() {
-    animationInterval = setInterval(() => {
-      if (frames && frames.length) {
+    animationInterval = setInterval(async () => {
+      if (displayFrames && displayFrames.length) {
         //Display the current frame
-        displayFrame(frames[frameIndex]);
+        displayFrame(displayFrames[frameIndex]);
+
+        // //Hang on last frame (if needed)
+        // if(frameIndex == displayFrames.length-1 && hangAtEnd){
+        //   await new Promise(res => setTimeout(res, 1000));
+        // }
 
         //Move to the next frame
-        frameIndex = (frameIndex + 1) % frames.length;
+        frameIndex = (frameIndex + 1) % displayFrames.length;
       }
     }, frameDelay);
   }
@@ -102,7 +131,7 @@
   export async function save() {
     //Generate GIF frames
     let frameURLs = [];
-    for (let frame of frames) {
+    for (let frame of displayFrames) {
       frameURLs.push(
         await generateImageURL(
           computeColorGrid(frame),
@@ -112,14 +141,21 @@
           cellWidth
         )
       );
-      dispatch("gifProgressUpdate", `Generating: ${((frames.indexOf(frame) / frames.length) * 100).toFixed(0)}%`);
+      dispatch(
+        "gifProgressUpdate",
+        `Generating: ${((displayFrames.indexOf(frame) / displayFrames.length) * 100).toFixed(
+          0
+        )}%`
+      );
     }
-    
+
     //Save the gif (or image, if there is only one frame)
     if (frameURLs.length > 1) {
-      makeAndSaveGif(frameURLs, frameDelay, (update) => {dispatch("gifProgressUpdate", update)});
+      makeAndSaveGif(frameURLs, frameDelay, (update) => {
+        dispatch("gifProgressUpdate", update);
+      });
     } else {
-      dispatch("gifProgressUpdate", null)
+      dispatch("gifProgressUpdate", null);
       saveImageFromURL(frameURLs[0]);
     }
   }

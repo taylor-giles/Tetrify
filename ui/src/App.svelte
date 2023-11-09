@@ -60,6 +60,7 @@
     animations: null,
   };
   let showLastFrames = false;
+  let hangAtEnd = true;
   let gifProgress: string | null = null;
   let animations = [];
   let lastFrameHashes = [];
@@ -341,6 +342,7 @@
         {borderColor}
         {borderThickness}
         {frameDelay}
+        {hangAtEnd}
         {getColor}
         on:gifProgressUpdate={onGifProgressUpdate}
       />
@@ -388,6 +390,19 @@
           </td>
           <td>
             <div style="margin-left: 3px;">Show Only Final Board State</div>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <input
+              type="checkbox"
+              bind:checked={hangAtEnd}
+              class="checkbox-input"
+              disabled={animations.length < 1 || showLastFrames}
+            />
+          </td>
+          <td>
+            <div style="margin-left: 3px;">Hang on Last Frame</div>
           </td>
         </tr>
 
