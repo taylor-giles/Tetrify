@@ -48,7 +48,7 @@ wsServer.on('connection', (ws: TetrifyWebSocket) => {
 
             //Setup heartbeat
             ws.on('pong', () => {
-                setInterval(() => {
+                setTimeout(() => {
                     ws.ping();
                 }, PING_INTERVAL);
             });
