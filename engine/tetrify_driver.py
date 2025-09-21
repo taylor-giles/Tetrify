@@ -22,6 +22,7 @@ def send_frames(animation):
   send(data)
 
 # Build agent and run simulation
+sys.setrecursionlimit(2000)
 board = board_from_grid(arr)
 agent = TetrisAgent(board.shape, false_positives, false_negatives, enforce_gravity, reduce_Is)
 result, animation = agent.run_simulation(board, board, on_success=send_frames)

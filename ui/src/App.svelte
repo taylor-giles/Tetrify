@@ -5,10 +5,10 @@
     STOPPED,
   }
 
-  //30x30 is the largest possible grid that can be animated without running into recursion errors
+  //40x40 is the largest possible grid that can be animated without running into recursion errors
   //Any width lower than 8 causes buggy behavior
-  export const MAX_WIDTH = 30;
-  export const MAX_HEIGHT = 30;
+  export const MAX_WIDTH = 40;
+  export const MAX_HEIGHT = 40;
   export const MIN_WIDTH = 8;
   export const MIN_HEIGHT = 1;
 </script>
