@@ -1,6 +1,6 @@
 {
   "name": "tetrify",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "private": true,
   "type": "module",
   "main": "ui/index.cjs",
@@ -25,7 +25,7 @@
     "start": "cross-env NODE_ENV=electron-forge electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make",
-    "serve": "npx ts-node-esm server/server.ts"
+    "serve": "node --loader ts-node/esm server/server.ts"
   },
   "devDependencies": {
     "@electron-forge/cli": "^6.4.2",
